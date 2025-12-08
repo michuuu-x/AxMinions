@@ -84,13 +84,17 @@ class SellerMinionType : MinionType("seller", AxMinionsPlugin.INSTANCE.getResour
 
             price *= getDouble("multiplier", minion.getLevel())
 
-            if (minion.getStorage() + price > getDouble("storage", minion.getLevel())) {
-                continue
-            }
-
             minion.setActions(minion.getActionAmount() + it.amount)
             minion.damageTool()
+
+            // Track total earned in storage for statistics
             minion.setStorage(minion.getStorage() + price)
+
+            // Immediately pay the owner via economy
+            AxMinionsPlugin.integrations.getEconomyIntegration()?.let { econ ->
+                econ.giveBalance(minion.getOwner(), price)
+            }
+
             it.amount = 0
         }
     }

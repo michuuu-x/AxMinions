@@ -79,6 +79,9 @@ object MinionUtils {
 
             val type = block.type.toString()
             if (type.endsWith("_WOOD") || type.endsWith("_LOG")) {
+                if (PlacedLogTracker.isPlayerPlaced(block.location)) {
+                    continue
+                }
                 if (count >= max) {
                     return tree
                 }

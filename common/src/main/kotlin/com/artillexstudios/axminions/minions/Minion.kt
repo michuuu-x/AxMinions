@@ -48,7 +48,9 @@ import org.bukkit.inventory.meta.Damageable
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.EulerAngle
-import java.text.NumberFormat
+import java.math.RoundingMode
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -76,7 +78,7 @@ class Minion(
             EquipmentSlot.CHEST_PLATE,
             EquipmentSlot.HELMET
         )
-        private val numberFormat = NumberFormat.getCompactNumberInstance(Locale.ENGLISH, NumberFormat.Style.SHORT)
+        private val priceFormat: DecimalFormat = createPriceFormat()
         private val notDurable = arrayListOf<Material>()
 
         init {
@@ -85,6 +87,37 @@ class Minion(
                     notDurable.add(value)
                 }
             }
+        }
+
+        private fun createPriceFormat(): DecimalFormat {
+            val config = AxMinionsAPI.INSTANCE.getConfig().getConfig()
+
+            val pattern: String = config.get("number.prices-format.format", "#,###.##")
+            val roundingString: String = config.get("number.prices-format.rounding", "half_even")
+            val localeString: String = config.get("number.prices-format.locale", "en-US")
+
+            val locale = try {
+                Locale.forLanguageTag(localeString)
+            } catch (ignored: Exception) {
+                Locale.US
+            }
+
+            val symbols = DecimalFormatSymbols(locale)
+            val decimalFormat = DecimalFormat(pattern, symbols)
+
+            decimalFormat.roundingMode = when (roundingString.lowercase(Locale.ENGLISH)) {
+                "up" -> RoundingMode.UP
+                "down" -> RoundingMode.DOWN
+                "ceiling" -> RoundingMode.CEILING
+                "floor" -> RoundingMode.FLOOR
+                "half_up" -> RoundingMode.HALF_UP
+                "half_down" -> RoundingMode.HALF_DOWN
+                "half_even" -> RoundingMode.HALF_EVEN
+                "unnecessary" -> RoundingMode.UNNECESSARY
+                else -> RoundingMode.HALF_EVEN
+            }
+
+            return decimalFormat
         }
     }
 
@@ -179,7 +212,7 @@ class Minion(
 
         if (Config.DEBUG()) {
             debugHologram = Hologram(location.clone().add(0.0, 2.0, 0.0))
-            val page = hologram?.createPage(HologramTypes.TEXT)
+            val page = debugHologram?.createPage(HologramTypes.TEXT)
             page?.setEntityMetaHandler({ meta ->
                 val textDisplayMeta = meta as TextDisplayMeta;
                 textDisplayMeta.seeThrough(true);
@@ -235,7 +268,7 @@ class Minion(
         }
 
         if (Config.DEBUG() && debugHologram != null) {
-            (debugHologram?.page(0) as TextDisplayHologramPage).setContent("Ticking: $ticking")
+            debugHologram!!.setContent(0, "Ticking: $ticking")
         }
 
         if (Config.CHARGE_ENABLED() && getCharge() < System.currentTimeMillis()) {
@@ -322,10 +355,12 @@ class Minion(
                 )
                 val price = Placeholder.parsed(
                     "price",
-                    if (type.hasReachedMaxLevel(this)) Messages.UPGRADES_MAX_LEVEL_REACHED() else type.getDouble(
-                        "requirements.money",
-                        this.level + 1
-                    ).toString()
+                    if (type.hasReachedMaxLevel(this)) Messages.UPGRADES_MAX_LEVEL_REACHED() else priceFormat.format(
+                        type.getDouble(
+                            "requirements.money",
+                            this.level + 1
+                        )
+                    )
                 )
                 val requiredActions =
                     Placeholder.parsed(
@@ -333,9 +368,9 @@ class Minion(
                         if (type.hasReachedMaxLevel(this)) Messages.UPGRADES_MAX_LEVEL_REACHED() else type.getDouble(
                             "requirements.actions",
                             this.level + 1
-                        ).toString()
+                        ).toLong().toString()
                     )
-                val stored = Placeholder.parsed("storage", numberFormat.format(storage))
+                val stored = Placeholder.parsed("storage", priceFormat.format(storage))
                 val actions = Placeholder.parsed("actions", actions.toString())
                 val multiplier = Placeholder.parsed("multiplier", type.getDouble("multiplier", this.level).toString())
                 val nextMultiplier = Placeholder.parsed(
@@ -393,9 +428,9 @@ class Minion(
                 val linked = Placeholder.unparsed(
                     "linked", when (linkedChest) {
                         null -> "---"
-                        else -> Messages.LOCATION_FORMAT().replace("<world>", location.world!!.name)
-                            .replace("<x>", location.blockX.toString()).replace("<y>", location.blockY.toString())
-                            .replace("<z>", location.blockZ.toString())
+                        else -> Messages.LOCATION_FORMAT().replace("<world>", linkedChest?.world!!.name)
+                            .replace("<x>", linkedChest?.blockX.toString()).replace("<y>", linkedChest?.blockY.toString())
+                            .replace("<z>", linkedChest?.blockZ.toString())
                     }
                 )
                 item = ItemBuilder.create(

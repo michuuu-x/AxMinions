@@ -91,6 +91,10 @@ class LumberMinionType : MinionType("lumber", AxMinionsPlugin.INSTANCE.getResour
                 Material.DARK_OAK_SAPLING
             }
 
+            "PALE_OAK_LOG" -> {
+                Material.matchMaterial("PALE_OAK_SAPLING") ?: Material.OAK_SAPLING
+            }
+
             "BIRCH_LOG" -> {
                 Material.BIRCH_SAPLING
             }

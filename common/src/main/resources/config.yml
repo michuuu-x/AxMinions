@@ -68,7 +68,7 @@ hooks:
   # Supported economy providers: Vault, PlayerPoints, custom
   economy: "Vault"
   # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, CMI, custom
-  prices: "ShopGUIPlus"
+  prices: "Essentials"
 
 charge:
   enabled: false
@@ -86,6 +86,15 @@ charge:
 # 2 - short format, for example 20m
 # 3 - text format, for example 01h 25m 35s
 timer-format: 1
+
+# Control over how numerical data is formatted and rounded.
+# Allowed modes: UP, DOWN, CEILING, FLOOR, HALF_UP, HALF_DOWN, HALF_EVEN, UNNECESSARY
+# A tutorial can be found here: https://docs.oracle.com/javase/tutorial/i18n/format/decimalFormat.html
+number:
+  prices-format:
+    format: "#,###.##"
+    rounding: "half_even"
+    locale: "en-US"
 
 gui:
   size: 27
