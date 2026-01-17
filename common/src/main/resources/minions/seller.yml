@@ -45,7 +45,7 @@ gui:
     lore:
       - ""
       - " <gray>- <white>Items sold: <#CC00FF><actions>"
-      - " <gray>- <white>Stored coins: <#CC00FF><storage>"
+      - " <gray>- <white>Stored coins: <#CC00FF><storage>$"
       - ""
       - "<#CC00FF><b>(!)</b> Click here to collect the stored coins!"
 

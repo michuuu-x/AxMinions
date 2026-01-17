@@ -29,6 +29,9 @@ only-owner-gui: true
 # You can configure these messages in the messages.yml
 display-warnings: true
 
+# Warning hologram height offset relative to minion location
+warning-hologram-height: 1.72
+
 # If set to true, the minion will not break the tool, it will just stay at 1 durability (and the minion will be stopped)
 # If set to false, the minion can break the tool
 can-break-tools: true

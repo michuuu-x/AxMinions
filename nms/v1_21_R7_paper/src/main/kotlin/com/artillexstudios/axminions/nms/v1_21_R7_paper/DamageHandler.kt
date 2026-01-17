@@ -1,4 +1,4 @@
-package com.artillexstudios.axminions.nms.v1_21_R4
+package com.artillexstudios.axminions.nms.v1_21_R7_paper
 
 import com.artillexstudios.axminions.api.events.PreMinionDamageEntityEvent
 import com.artillexstudios.axminions.api.minions.Minion
@@ -132,7 +132,7 @@ object DamageHandler {
                         f3 = nmsEntity.health
                         if (j > 0 && !nmsEntity.isOnFire()) {
                             flag4 = true
-                            nmsEntity.igniteForSeconds(1f, false)
+                            nmsEntity.igniteForSeconds(1.0f, false)
                         }
                     }
 
@@ -144,8 +144,8 @@ object DamageHandler {
 
                     // Set lastHurtByPlayer to enable player-only drops (e.g., Blaze Rod, Piglin drops)
                     if (nmsEntity is LivingEntity) {
-                        nmsEntity.lastHurtByPlayer = EntityReference(attackingPlayer)
-                        nmsEntity.lastHurtByMob = EntityReference(attackingPlayer)
+                        nmsEntity.lastHurtByPlayer = EntityReference.of(attackingPlayer)
+                        nmsEntity.lastHurtByMob = EntityReference.of(attackingPlayer)
                         nmsEntity.lastHurtByMobTimestamp = nmsEntity.tickCount
                     }
 
@@ -162,15 +162,15 @@ object DamageHandler {
                         if (i > 0) {
                             if (nmsEntity is LivingEntity) {
                                 (nmsEntity).knockback(
-                                    (i.toFloat() * 0.5f).toDouble(),
-                                    Mth.sin(source.getLocation().yaw * 0.017453292f).toDouble(),
-                                    (-Mth.cos(source.getLocation().yaw * 0.017453292f)).toDouble()
+                                    i.toDouble() * 0.5,
+                                    Mth.sin(source.getLocation().yaw * 0.017453292).toDouble(),
+                                    (-Mth.cos(source.getLocation().yaw * 0.017453292)).toDouble()
                                 )
                             } else {
                                 nmsEntity.push(
-                                    (-Mth.sin(source.getLocation().yaw * 0.017453292f) * i.toFloat() * 0.5f).toDouble(),
+                                    -Mth.sin(source.getLocation().yaw * 0.017453292).toDouble() * i.toDouble() * 0.5,
                                     0.1,
-                                    (Mth.cos(source.getLocation().yaw * 0.017453292f) * i.toFloat() * 0.5f).toDouble()
+                                    Mth.cos(source.getLocation().yaw * 0.017453292).toDouble() * i.toDouble() * 0.5
                                 )
                             }
                         }
@@ -205,17 +205,17 @@ object DamageHandler {
                                     // CraftBukkit start - Only apply knockback if the damage hits
                                     if (entityliving.hurtServer((source.getLocation().world as CraftWorld).handle as ServerLevel, nmsEntity.damageSources().playerAttack(attackingPlayer), f4)) {
                                         entityliving.knockback(
-                                            0.4000000059604645,
-                                            Mth.sin(source.getLocation().yaw * 0.017453292f).toDouble(),
-                                            (-Mth.cos(source.getLocation().yaw * 0.017453292f)).toDouble()
+                                            0.4,
+                                            Mth.sin(source.getLocation().yaw * 0.017453292).toDouble(),
+                                            (-Mth.cos(source.getLocation().yaw * 0.017453292)).toDouble()
                                         )
                                     }
                                     // CraftBukkit end
                                 }
                             }
 
-                            val d0 = -Mth.sin(source.getLocation().yaw * 0.017453292f).toDouble()
-                            val d1 = Mth.cos(source.getLocation().yaw * 0.017453292f).toDouble()
+                            val d0 = -Mth.sin(source.getLocation().yaw * 0.017453292).toDouble()
+                            val d1 = Mth.cos(source.getLocation().yaw * 0.017453292).toDouble()
 
                             if ((source.getLocation().world as CraftWorld).handle is ServerLevel) {
                                 ((source.getLocation().world as CraftWorld).handle as ServerLevel).sendParticles(
@@ -236,7 +236,7 @@ object DamageHandler {
                             val f5: Float = f3 - nmsEntity.health
 
                             if (j > 0) {
-                                nmsEntity.igniteForSeconds(j * 4f, false)
+                                nmsEntity.igniteForSeconds((j * 4).toFloat(), false)
                             }
 
                             if ((source.getLocation().world as CraftWorld).handle is ServerLevel && f5 > 2.0f) {

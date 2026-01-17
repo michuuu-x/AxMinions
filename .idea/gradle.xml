@@ -5,22 +5,23 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="C:\Program Files\gradle-8.14.3" />
+        <option name="gradleJvm" value="21" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/api" />
             <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/nms" />
-            <option value="$PROJECT_DIR$/nms/v1_20_R1" />
-            <option value="$PROJECT_DIR$/nms/v1_20_R2" />
-            <option value="$PROJECT_DIR$/nms/v1_20_R3" />
-            <option value="$PROJECT_DIR$/nms/v1_20_R4" />
-            <option value="$PROJECT_DIR$/nms/v1_21_R1" />
-            <option value="$PROJECT_DIR$/nms/v1_21_R2" />
             <option value="$PROJECT_DIR$/nms/v1_21_R3" />
             <option value="$PROJECT_DIR$/nms/v1_21_R4" />
+            <option value="$PROJECT_DIR$/nms/v1_21_R5" />
+            <option value="$PROJECT_DIR$/nms/v1_21_R6" />
+            <option value="$PROJECT_DIR$/nms/v1_21_R7" />
+            <option value="$PROJECT_DIR$/nms/v1_21_R7_paper" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="true" />
       </GradleProjectSettings>
     </option>
   </component>
