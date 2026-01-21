@@ -45,6 +45,8 @@ class Messages(file: File, stream: InputStream) {
         @JvmStatic
         fun PLACE_MINION_AT_LOCATION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.minion-at-location")
         @JvmStatic
+        fun INVALID_PLACEMENT_LOCATION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.invalid-block")
+        @JvmStatic
         fun PLACE_MISSING_PERMISSION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.missing-permission")
         @JvmStatic
         fun ISLAND_LIMIT_REACHED() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.island-limit-reached")

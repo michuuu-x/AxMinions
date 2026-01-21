@@ -36,6 +36,14 @@ Slayer minion kills are now registered as player kills to enable mob drops that 
 - `PreMinionDamageEntityEvent` - Fired before minion damages an entity (cancellable)
 - `MinionKillEntityEvent` - Fired when minion kills an entity
 
+#### 🧱 Minion Placement Validation (MinionPlaceListener)
+Improved validation when placing minions:
+- **Full hitbox check** (`hasFullHitbox`) — Minions can only be placed on blocks with a full hitbox. Non-full blocks are rejected:
+  - Chests, anvils, brewing stands, hoppers, cauldrons, lecterns, etc.
+  - Slabs, stairs, walls, fences, beds, carpets, pressure plates, signs, skulls/heads, candles, pots, trapdoors, doors, chains, ladders, vines, coral, cake, snow, and more.
+- **Collision check** (`hasCollision`) — Minions cannot be placed in locations occupied by blocks with collision (e.g., grass, flowers, saplings, mushrooms, crops, torches, fire, redstone wire, rails, levers, buttons, tripwire, cobwebs, etc.).
+- Updated message: `place.invalid-block` → `"<red>You cannot place a minions in this location!"` — shown when placement is blocked due to invalid block conditions.
+
 ---
 
 ### Issues Tracking

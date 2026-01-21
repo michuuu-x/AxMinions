@@ -29,23 +29,49 @@ import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.core.component.DataComponents
 import net.minecraft.core.Holder
 import net.minecraft.world.entity.ai.attributes.Attribute
+import org.bukkit.plugin.Plugin
 import java.util.*
 
+@Suppress("DEPRECATION")
 object DamageHandler {
-    private var FAKE_PLAYER: ServerPlayer? = null
+    private var FAKE_PLAYER: MinionFakePlayer? = null
     private var minion: Minion? = null
 
-    private fun getOrCreateFakePlayer(): ServerPlayer {
+    /**
+     * Simple MetadataValue implementation to mark fake player as NPC.
+     * Note: MetadataValue is deprecated in Paper but still works and is the standard way
+     * for plugins like Essentials to detect NPCs.
+     */
+    private class NpcMetadataValue(private val owningPlugin: Plugin) : org.bukkit.metadata.MetadataValue {
+        override fun value(): Any = true
+        override fun asInt(): Int = 1
+        override fun asFloat(): Float = 1f
+        override fun asDouble(): Double = 1.0
+        override fun asLong(): Long = 1L
+        override fun asShort(): Short = 1
+        override fun asByte(): Byte = 1
+        override fun asBoolean(): Boolean = true
+        override fun asString(): String = "true"
+        override fun getOwningPlugin(): Plugin = owningPlugin
+        override fun invalidate() {}
+    }
+
+    private fun getOrCreateFakePlayer(): MinionFakePlayer {
         if (FAKE_PLAYER == null) {
             val world = Bukkit.getWorlds().get(0)
             val serverLevel = (world as CraftWorld).handle
             val profile = GameProfile(UUID.randomUUID(), "[Minion]")
-            FAKE_PLAYER = ServerPlayer(
+            FAKE_PLAYER = MinionFakePlayer(
                 MinecraftServer.getServer(),
                 serverLevel,
                 profile,
                 ClientInformation.createDefault()
             )
+            // Mark as NPC so Essentials and other plugins ignore this fake player
+            val plugin = Bukkit.getPluginManager().getPlugin("AxMinions")
+            if (plugin != null) {
+                FAKE_PLAYER!!.bukkitEntity.setMetadata("NPC", NpcMetadataValue(plugin))
+            }
         }
         return FAKE_PLAYER!!
     }
@@ -142,8 +168,10 @@ object DamageHandler {
                     }
 
                     // Set lastHurtByPlayer to enable player-only drops (e.g., Blaze Rod, Piglin drops)
+                    // Use real owner when online for proper attribution, fake player when offline for drops to work
                     if (nmsEntity is LivingEntity) {
-                        nmsEntity.lastHurtByPlayer = attackingPlayer
+                        val playerForDrops = if (useRealPlayer) attackingPlayer else getOrCreateFakePlayer()
+                        nmsEntity.lastHurtByPlayer = playerForDrops
                         nmsEntity.lastHurtByPlayerTime = 100
                     }
 

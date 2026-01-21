@@ -25,6 +25,92 @@ import org.bukkit.persistence.PersistentDataType
 
 class MinionPlaceListener : Listener {
 
+    private fun hasFullHitbox(material: Material): Boolean {
+        val nonFullBlocks = setOf(
+            Material.CHEST, Material.TRAPPED_CHEST, Material.ENDER_CHEST,
+            Material.ENCHANTING_TABLE, Material.ANVIL, Material.CHIPPED_ANVIL, Material.DAMAGED_ANVIL,
+            Material.BREWING_STAND, Material.CAULDRON, Material.HOPPER,
+            Material.SOUL_SAND, Material.FARMLAND, Material.DIRT_PATH,
+            Material.LECTERN, Material.COMPOSTER, Material.STONECUTTER, Material.GRINDSTONE,
+            Material.HONEY_BLOCK, Material.BELL, Material.LANTERN, Material.SOUL_LANTERN,
+            Material.CAMPFIRE, Material.SOUL_CAMPFIRE, Material.END_PORTAL_FRAME,
+            Material.DAYLIGHT_DETECTOR, Material.CACTUS
+        )
+
+        val name = material.name
+        return material !in nonFullBlocks &&
+               !name.contains("SLAB") &&
+               !name.contains("STAIRS") &&
+               !name.contains("WALL") &&
+               !name.contains("FENCE") &&
+               !name.contains("BED") &&
+               !name.contains("CARPET") &&
+               !name.contains("PRESSURE_PLATE") &&
+               !name.contains("SIGN") &&
+               !name.contains("SKULL") &&
+               !name.contains("HEAD") &&
+               !name.contains("CANDLE") &&
+               !name.contains("POT") &&
+               !name.contains("TRAPDOOR") &&
+               !name.contains("DOOR") &&
+               !name.contains("CHAIN") &&
+               !name.contains("LADDER") &&
+               !name.contains("VINE") &&
+               !name.contains("AMETHYST_CLUSTER") &&
+               !name.contains("AMETHYST_BUD") &&
+               !name.contains("CORAL") &&
+               !name.contains("PICKLE") &&
+               !name.contains("TURTLE_EGG") &&
+               !name.contains("FROGSPAWN") &&
+               !name.contains("ROD") &&
+               !name.contains("CONDUIT") &&
+               !name.contains("CAKE") &&
+               !name.contains("SNOW")
+    }
+
+    private fun hasCollision(material: Material): Boolean {
+        val name = material.name
+        // Bloki które mają kolizję ale nie są pełne
+        return name.contains("GRASS") ||
+               name.contains("FERN") ||
+               name.contains("FLOWER") ||
+               name.contains("TULIP") ||
+               name.contains("ORCHID") ||
+               name.contains("DANDELION") ||
+               name.contains("POPPY") ||
+               name.contains("ALLIUM") ||
+               name.contains("AZURE") ||
+               name.contains("OXEYE") ||
+               name.contains("CORNFLOWER") ||
+               name.contains("LILY") ||
+               name.contains("WITHER_ROSE") ||
+               name.contains("SUNFLOWER") ||
+               name.contains("LILAC") ||
+               name.contains("ROSE_BUSH") ||
+               name.contains("PEONY") ||
+               name.contains("SAPLING") ||
+               name.contains("MUSHROOM") ||
+               name.contains("WHEAT") ||
+               name.contains("CARROTS") ||
+               name.contains("POTATOES") ||
+               name.contains("BEETROOTS") ||
+               name.contains("SWEET_BERRY") ||
+               name.contains("DEAD_BUSH") ||
+               name.contains("SEAGRASS") ||
+               name.contains("KELP") ||
+               name.contains("SUGAR_CANE") ||
+               name.contains("BAMBOO") ||
+               name.contains("COBWEB") ||
+               name.contains("TORCH") ||
+               name.contains("FIRE") ||
+               name.contains("REDSTONE_WIRE") ||
+               name.contains("RAIL") ||
+               name.contains("LEVER") ||
+               name.contains("BUTTON") ||
+               name.contains("TRIPWIRE") ||
+               name.contains("STRING")
+    }
+
     @EventHandler
     fun onPlayerInteractEvent(event: PlayerInteractEvent) {
         if (event.action != Action.RIGHT_CLICK_BLOCK && event.action != Action.RIGHT_CLICK_AIR) return
@@ -47,6 +133,23 @@ class MinionPlaceListener : Listener {
             return
         }
 
+        // Blok pod lokalizacją gdzie będzie stał minion
+        val minionLocation = event.clickedBlock!!.getRelative(event.blockFace).location
+        val blockBelow = minionLocation.clone().subtract(0.0, 1.0, 0.0).block
+        val blockAtMinion = minionLocation.block
+
+        // Sprawdź czy blok w miejscu miniona nie jest blokiem z hitboxem (np. trawa, kwiaty itp.)
+        if (blockAtMinion.type.isSolid || !blockAtMinion.type.isAir && hasCollision(blockAtMinion.type)) {
+            event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.INVALID_PLACEMENT_LOCATION()))
+            return
+        }
+
+        // Sprawdź czy blok pod minionem ma pełny hitbox
+        if (!hasFullHitbox(blockBelow.type) || !blockBelow.type.isSolid) {
+            event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.INVALID_PLACEMENT_LOCATION()))
+            return
+        }
+
         val prePlaceEvent = PreMinionPlaceEvent(event.player, event.clickedBlock!!.location)
 
         val level = meta.persistentDataContainer.get(Keys.LEVEL, PersistentDataType.INTEGER) ?: 0
@@ -66,7 +169,7 @@ class MinionPlaceListener : Listener {
         meta.persistentDataContainer.set(Keys.PLACED, PersistentDataType.BYTE, 0)
         item.itemMeta = meta
 
-        val location = event.clickedBlock!!.getRelative(event.blockFace).location
+        val location = minionLocation
 
         val maxMinions = AxMinionsAPI.INSTANCE.getMinionLimit(event.player)
 

@@ -8,6 +8,7 @@ place:
   minion-at-location: "<red>Could not place minion! There already is a minion at that location!"
   missing-permission: "<red>You do not have the required permissions to place this minion!"
   island-limit-reached: "<red>You have reached the island limit for minions! <gray>(<placed>/<max>)"
+  invalid-block: "<red>You cannot place a minions in this location!"
 
 pickup:
   success: "<green>Successfully picked up a minion! <gray>(<placed>/<max>)"

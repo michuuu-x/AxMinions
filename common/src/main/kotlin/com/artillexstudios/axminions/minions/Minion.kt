@@ -898,11 +898,26 @@ class Minion(
             allowedTools.add(Material.matchMaterial(it) ?: return@fastFor)
         }
 
-        linkedInventory?.contents?.fastFor {
-            if (it == null || it.type !in allowedTools) return@fastFor
+        val inventory = linkedInventory ?: return ItemStack(Material.AIR)
+        val contents = inventory.contents
 
-            linkedInventory?.remove(it)
-            return it
+        for (i in contents.indices) {
+            val item = contents[i] ?: continue
+            if (item.type !in allowedTools) continue
+
+            // Clone one item to return
+            val singleItem = item.clone()
+            singleItem.amount = 1
+
+            // Decrease the amount in the chest by 1
+            if (item.amount <= 1) {
+                inventory.setItem(i, null)
+            } else {
+                item.amount = item.amount - 1
+                inventory.setItem(i, item)
+            }
+
+            return singleItem
         }
 
         return ItemStack(Material.AIR)
