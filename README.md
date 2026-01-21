@@ -59,13 +59,15 @@ Fixed an issue where minions with `pull-tools-from-chest: true` would take all m
 | # | Issue | Status |
 |---|-------|--------|
 | 1 | When island is deleted, all owner's minions should be returned to their inventory | 🔧 To fix |
-| 2 | https://github.com/Artillex-Studios/Issues/issues/784 | ❓ |
-| 3 | https://github.com/Artillex-Studios/Issues/issues/630 | ❓ |
-| 4 | https://github.com/Artillex-Studios/Issues/issues/740 | ❓ |
-| 5 | https://github.com/Artillex-Studios/Issues/issues/833 | ✔️ |
-| 6 | https://github.com/Artillex-Studios/Issues/issues/759 | ✔️ |
-| 7 | https://github.com/Artillex-Studios/Issues/issues/629 | ✔️ |
-| 8 | https://github.com/Artillex-Studios/Issues/issues/374 | ✔️ |
-| 9 | https://github.com/Artillex-Studios/Issues/issues/360 | ✔️ |
-| 10 | https://github.com/Artillex-Studios/Issues/issues/631 | ✔️ |
+| 2 | Review minion limit manipulations per island | 🔧 To fix |
+| 3 | https://github.com/Artillex-Studios/Issues/issues/859 | 🔧 To fix |
+| 4 | https://github.com/Artillex-Studios/Issues/issues/784 | 🔧 To fix |
+| 5 | https://github.com/Artillex-Studios/Issues/issues/630 | 🔧 To fix |
+| 6 | https://github.com/Artillex-Studios/Issues/issues/740 | 🔧 To fix |
+| 7 | https://github.com/Artillex-Studios/Issues/issues/833 | ✔️ |
+| 8 | https://github.com/Artillex-Studios/Issues/issues/759 | ✔️ |
+| 9 | https://github.com/Artillex-Studios/Issues/issues/629 | ✔️ |
+| 10 | https://github.com/Artillex-Studios/Issues/issues/374 | ✔️ |
+| 11 | https://github.com/Artillex-Studios/Issues/issues/360 | ✔️ |
+| 12 | https://github.com/Artillex-Studios/Issues/issues/631 | ✔️ |
 
