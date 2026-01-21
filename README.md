@@ -12,8 +12,31 @@
 - **Removed support:** 1.18.2, 1.19.2, 1.19.3, 1.19.4, 1.20, 1.20.2, 1.20.4, 1.20.6, 1.21, 1.21.3
 - **Added support:** 1.21.11
 
-### New Features
-- **Slayer Minion Player Kill Drops:** When the minion owner is online, slayer minion kills are now registered as player kills. This enables mobs to drop items that require player kills (e.g., Blaze Rods, Wither Skeleton Skulls, Piglin gold items). Player advancements and statistics from minion kills are automatically blocked.
+### Implemented Features
+
+#### 🗡️ Slayer Minion Player Kill Drops
+Slayer minion kills are now registered as player kills to enable mob drops that require a player killer (e.g., Blaze Rods, Wither Skeleton Skulls, Piglin gold items).
+
+**Behavior:**
+- When owner is **online**: Uses real player as damage source
+  - Advancements are automatically revoked when granted
+  - Statistics increments are cancelled
+  - Player marked with `minion_attacking` metadata during attack
+- When owner is **offline**: Uses a fake player `[Minion]`
+  - Cannot earn advancements (DummyPlayerAdvancements)
+  - Cannot affect statistics
+  - Marked with `NPC` metadata for Essentials compatibility
+
+**Technical Implementation:**
+- `MinionFakePlayer` - Custom ServerPlayer that overrides advancement system
+- `MinionPlayerEventBlocker` - Listener that blocks PlayerAdvancementDoneEvent and PlayerStatisticIncrementEvent
+- `DamageHandler` - Sets `lastHurtByPlayer` on entities for proper drop attribution
+
+#### 🔧 New Events
+- `PreMinionDamageEntityEvent` - Fired before minion damages an entity (cancellable)
+- `MinionKillEntityEvent` - Fired when minion kills an entity
+
+---
 
 ### Issues Tracking
 
