@@ -37,7 +37,7 @@ Fixed an issue where minions with `pull-tools-from-chest: true` would take all m
 | #  | Issue | Status |
 |----|-------|--------|
 | 1  | When island is deleted, all owner's minions should be returned to their inventory | ✔️ |
-| 2  | Review minion limit manipulations per island | 🔧 To fix |
+| 2  | Review minion limit manipulations per island | ✔️ |
 | 3  | https://github.com/Artillex-Studios/Issues/issues/784 | 🔧 To fix |
 | 4  | https://github.com/Artillex-Studios/Issues/issues/630 | 🔧 To fix |
 | 5  | https://github.com/Artillex-Studios/Issues/issues/740 | 🔧 To fix |
