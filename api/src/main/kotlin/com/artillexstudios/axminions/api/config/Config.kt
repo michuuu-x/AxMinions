@@ -63,6 +63,12 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun PULL_FROM_CHEST() = AxMinionsAPI.INSTANCE.getConfig().get("pull-tools-from-chest", false)
         @JvmStatic
+        fun COLLISION_MATERIALS() = AxMinionsAPI.INSTANCE.getConfig().get("collision.materials", listOf<String>())
+        @JvmStatic
+        fun COLLISION_BLOCKS() = AxMinionsAPI.INSTANCE.getConfig().get("collision.blocks", listOf<String>())
+        @JvmStatic
+        fun COLLISION_NON_FULL() = AxMinionsAPI.INSTANCE.getConfig().get("collision.non-full", listOf<String>())
+        @JvmStatic
         fun UPGRADE_FAIL() = AxMinionsAPI.INSTANCE.getConfig().get("upgrade-fail", "chat").lowercase(Locale.ENGLISH)
         @JvmStatic
         fun PLACE_PERMISSION() = AxMinionsAPI.INSTANCE.getConfig().get("place-permissions", false)

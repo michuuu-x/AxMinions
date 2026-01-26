@@ -45,6 +45,86 @@ use-durability: true
 # If the minion should pull new tools from the chest it's connected to
 pull-tools-from-chest: false
 
+# Blocks and materials considered collision for placement checks
+collision:
+  # List of exact material names (e.g., CHEST, HOPPER).
+  # If a material is on this list, we treat it as "non-full" (doesn't have a full hitbox)
+  # — meaning it may not block minion placement.
+  # Tip: use full names from the Material enum (as in config.yml), e.g., CHEST
+  non-full:
+    - ENCHANTING_TABLE
+    - BREWING_STAND
+    - LECTERN
+    - COMPOSTER
+    - STONECUTTER
+    - BELL
+    - CAMPFIRE
+    - SOUL_CAMPFIRE
+    - END_PORTAL_FRAME
+    - DAYLIGHT_DETECTOR
+    - FENCE_GATE
+    - TRAPDOOR
+    - DOOR
+
+  # List of material name fragments (substrings) (e.g., SLAB, STAIRS, FENCE).
+  # If a material name contains any entry from this list (case-insensitive comparison),
+  # the material is treated as non-full (partial hitboxes, stairs, slabs, etc.).
+  # Tip: entry "SLAB" will match all types of slabs; entry "STAIRS" — all stairs.
+  materials:
+    - SLAB
+    - STAIRS
+    - BED
+    - CARPET
+    - PRESSURE_PLATE
+    - POT
+    - CORAL
+    - FROGSPAWN
+    - SNOW
+
+  # List of block name fragments that should be treated as collisions (e.g., GRASS, FLOWER, TORCH).
+  # This is a list of small/non-solid objects/plants/redstone elements, etc., which despite lacking a full block
+  # still block placement (plugin checks substrings in the name).
+  # Tip: use short fragments (e.g., FLOWER) to cover several similar blocks.
+  blocks:
+    - GRASS
+    - LADDER
+    - VINE
+    - HORN_CORAL
+    - FERN
+    - FLOWER
+    - TULIP
+    - ORCHID
+    - DANDELION
+    - POPPY
+    - ALLIUM
+    - AZURE
+    - OXEYE
+    - CORNFLOWER
+    - LILY
+    - WITHER_ROSE
+    - SUNFLOWER
+    - LILAC
+    - ROSE_BUSH
+    - PEONY
+    - SAPLING
+    - MUSHROOM
+    - WHEAT
+    - CARROTS
+    - POTATOES
+    - BEETROOTS
+    - DEAD_BUSH
+    - SEAGRASS
+    - KELP
+    - SUGAR_CANE
+    - BAMBOO
+    - COBWEB
+    - FIRE
+    - RAIL
+    - LEVER
+    - BUTTON
+    - TRIPWIRE
+    - STRING
+
 # If the minion should work when the owner is offline (only if the chunk is loaded)
 work-when-owner-offline: true
 

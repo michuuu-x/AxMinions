@@ -1,7 +1,7 @@
 package com.artillexstudios.axminions.listeners
 
 import com.artillexstudios.axminions.minions.Minions
-import com.bgsoftware.superiorskyblock.api.world.Dimension
+import com.bgsoftware.superiorskyblock.api.world.Dimension;
 import com.bgsoftware.superiorskyblock.api.events.IslandDisbandEvent
 import com.bgsoftware.superiorskyblock.api.events.IslandKickEvent
 import com.bgsoftware.superiorskyblock.api.island.IslandChunkFlags

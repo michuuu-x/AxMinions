@@ -22,7 +22,6 @@ import com.artillexstudios.axminions.listeners.MinionDamageListener
 import com.artillexstudios.axminions.listeners.MinionDropListener
 import com.artillexstudios.axminions.listeners.MinionInventoryListener
 import com.artillexstudios.axminions.listeners.MinionPlaceListener
-import com.artillexstudios.axminions.listeners.MinionPlayerEventBlocker
 import com.artillexstudios.axminions.listeners.PlacedLogListener
 import com.artillexstudios.axminions.listeners.PlayerListener
 import com.artillexstudios.axminions.listeners.WorldListener
@@ -124,7 +123,6 @@ class AxMinionsPlugin : AxPlugin() {
             it.registerEvents(MinionDropListener(), this)
             it.registerEvents(PlayerListener(), this)
             it.registerEvents(PlacedLogListener(), this)
-            it.registerEvents(MinionPlayerEventBlocker(), this)
         }
 
         // Retroactively load minions for the already loaded worlds

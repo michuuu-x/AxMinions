@@ -25,90 +25,32 @@ import org.bukkit.persistence.PersistentDataType
 
 class MinionPlaceListener : Listener {
 
+    // true if the material is a full block (no partial hitbox)
     private fun hasFullHitbox(material: Material): Boolean {
-        val nonFullBlocks = setOf(
-            Material.CHEST, Material.TRAPPED_CHEST, Material.ENDER_CHEST,
-            Material.ENCHANTING_TABLE, Material.ANVIL, Material.CHIPPED_ANVIL, Material.DAMAGED_ANVIL,
-            Material.BREWING_STAND, Material.CAULDRON, Material.HOPPER,
-            Material.SOUL_SAND, Material.FARMLAND, Material.DIRT_PATH,
-            Material.LECTERN, Material.COMPOSTER, Material.STONECUTTER, Material.GRINDSTONE,
-            Material.HONEY_BLOCK, Material.BELL, Material.LANTERN, Material.SOUL_LANTERN,
-            Material.CAMPFIRE, Material.SOUL_CAMPFIRE, Material.END_PORTAL_FRAME,
-            Material.DAYLIGHT_DETECTOR, Material.CACTUS
-        )
+        val nameU = material.name.uppercase()
 
-        val name = material.name
-        return material !in nonFullBlocks &&
-               !name.contains("SLAB") &&
-               !name.contains("STAIRS") &&
-               !name.contains("WALL") &&
-               !name.contains("FENCE") &&
-               !name.contains("BED") &&
-               !name.contains("CARPET") &&
-               !name.contains("PRESSURE_PLATE") &&
-               !name.contains("SIGN") &&
-               !name.contains("SKULL") &&
-               !name.contains("HEAD") &&
-               !name.contains("CANDLE") &&
-               !name.contains("POT") &&
-               !name.contains("TRAPDOOR") &&
-               !name.contains("DOOR") &&
-               !name.contains("CHAIN") &&
-               !name.contains("LADDER") &&
-               !name.contains("VINE") &&
-               !name.contains("AMETHYST_CLUSTER") &&
-               !name.contains("AMETHYST_BUD") &&
-               !name.contains("CORAL") &&
-               !name.contains("PICKLE") &&
-               !name.contains("TURTLE_EGG") &&
-               !name.contains("FROGSPAWN") &&
-               !name.contains("ROD") &&
-               !name.contains("CONDUIT") &&
-               !name.contains("CAKE") &&
-               !name.contains("SNOW")
+        // Exact non-full names
+        val nonFull = Config.COLLISION_NON_FULL().map { it.uppercase() }.toSet()
+        if (nonFull.contains(nameU)) return false
+
+        // Substring material checks
+        val materialChecks = Config.COLLISION_MATERIALS().map { it.uppercase() }
+        for (m in materialChecks) {
+            if (nameU.contains(m)) return false
+        }
+
+        return true
     }
 
+    // true if material/block should be treated as collision (blocks placement)
     private fun hasCollision(material: Material): Boolean {
-        val name = material.name
-        // Bloki które mają kolizję ale nie są pełne
-        return name.contains("GRASS") ||
-               name.contains("FERN") ||
-               name.contains("FLOWER") ||
-               name.contains("TULIP") ||
-               name.contains("ORCHID") ||
-               name.contains("DANDELION") ||
-               name.contains("POPPY") ||
-               name.contains("ALLIUM") ||
-               name.contains("AZURE") ||
-               name.contains("OXEYE") ||
-               name.contains("CORNFLOWER") ||
-               name.contains("LILY") ||
-               name.contains("WITHER_ROSE") ||
-               name.contains("SUNFLOWER") ||
-               name.contains("LILAC") ||
-               name.contains("ROSE_BUSH") ||
-               name.contains("PEONY") ||
-               name.contains("SAPLING") ||
-               name.contains("MUSHROOM") ||
-               name.contains("WHEAT") ||
-               name.contains("CARROTS") ||
-               name.contains("POTATOES") ||
-               name.contains("BEETROOTS") ||
-               name.contains("SWEET_BERRY") ||
-               name.contains("DEAD_BUSH") ||
-               name.contains("SEAGRASS") ||
-               name.contains("KELP") ||
-               name.contains("SUGAR_CANE") ||
-               name.contains("BAMBOO") ||
-               name.contains("COBWEB") ||
-               name.contains("TORCH") ||
-               name.contains("FIRE") ||
-               name.contains("REDSTONE_WIRE") ||
-               name.contains("RAIL") ||
-               name.contains("LEVER") ||
-               name.contains("BUTTON") ||
-               name.contains("TRIPWIRE") ||
-               name.contains("STRING")
+        val nameU = material.name.uppercase()
+        val blockChecks = Config.COLLISION_BLOCKS().map { it.uppercase() }
+        for (b in blockChecks) {
+            if (nameU.contains(b)) return true
+        }
+
+        return false
     }
 
     @EventHandler
@@ -138,8 +80,12 @@ class MinionPlaceListener : Listener {
         val blockBelow = minionLocation.clone().subtract(0.0, 1.0, 0.0).block
         val blockAtMinion = minionLocation.block
 
+
         // Sprawdź czy blok w miejscu miniona nie jest blokiem z hitboxem (np. trawa, kwiaty itp.)
-        if (blockAtMinion.type.isSolid || !blockAtMinion.type.isAir && hasCollision(blockAtMinion.type)) {
+        // Zmieniamy warunek tak, by korzystał z konfiguracji (hasFullHitbox) zamiast polegać wyłącznie
+        // na vanilla property isSolid. Dzięki temu możemy oznaczyć niektóre SOLID bloki jako "non-full"
+        // w konfiguracji i pozwolić na postawienie miniona na nich.
+        if (!blockAtMinion.type.isAir && (hasFullHitbox(blockAtMinion.type) || hasCollision(blockAtMinion.type))) {
             event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.INVALID_PLACEMENT_LOCATION()))
             return
         }

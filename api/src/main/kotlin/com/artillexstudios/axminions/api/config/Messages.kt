@@ -19,6 +19,8 @@ class Messages(file: File, stream: InputStream) {
         @JvmStatic
         fun PREFIX() = AxMinionsAPI.INSTANCE.getMessages().get<String>("prefix")
         @JvmStatic
+        fun INVALID_PLACEMENT_LOCATION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.invalid-block")
+        @JvmStatic
         fun NO_CONTAINER_WARNING() = AxMinionsAPI.INSTANCE.getMessages().get<String>("warnings.no-container")
         @JvmStatic
         fun NO_TOOL_WARNING() = AxMinionsAPI.INSTANCE.getMessages().get<String>("warnings.no-tool")
@@ -44,8 +46,6 @@ class Messages(file: File, stream: InputStream) {
         fun PLACE_LIMIT_REACHED() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.limit-reached")
         @JvmStatic
         fun PLACE_MINION_AT_LOCATION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.minion-at-location")
-        @JvmStatic
-        fun INVALID_PLACEMENT_LOCATION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.invalid-block")
         @JvmStatic
         fun PLACE_MISSING_PERMISSION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.missing-permission")
         @JvmStatic

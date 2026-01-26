@@ -7,7 +7,6 @@ import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.craftbukkit.block.CraftBlock
 import org.bukkit.craftbukkit.block.CraftBlockState
-import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.craftbukkit.util.CraftLocation
 import org.bukkit.entity.Entity
@@ -25,7 +24,8 @@ class NMSHandler : NMSHandler {
     }
 
     override fun isAnimal(entity: Entity): Boolean {
-        return (entity as CraftEntity).handle.type.category == MobCategory.CREATURE
+        // Poprawka rzutowania: używamy CraftEntity aby dostać handle
+        return (entity as org.bukkit.craftbukkit.entity.CraftEntity).handle.type.category == MobCategory.CREATURE
     }
 
     override fun getAnimalUUID(): UUID {

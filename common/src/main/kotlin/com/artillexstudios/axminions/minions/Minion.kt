@@ -905,11 +905,11 @@ class Minion(
             val item = contents[i] ?: continue
             if (item.type !in allowedTools) continue
 
-            // Clone one item to return
+            // Klonuj jeden element, aby go zwrócić
             val singleItem = item.clone()
             singleItem.amount = 1
 
-            // Decrease the amount in the chest by 1
+            // Zmniejsz ilość w skrzyni o 1
             if (item.amount <= 1) {
                 inventory.setItem(i, null)
             } else {
