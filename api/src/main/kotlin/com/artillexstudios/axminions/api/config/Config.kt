@@ -19,6 +19,8 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun AUTO_SAVE_MINUTES() = AxMinionsAPI.INSTANCE.getConfig().get("autosave-minutes", 3L)
         @JvmStatic
+        fun BLOCK_ISLAND_DISBAND_WITH_MINIONS() = AxMinionsAPI.INSTANCE.getConfig().get("block-island-disband-with-minions", true)
+        @JvmStatic
         fun WARNING_HOLOGRAM_HEIGHT() = AxMinionsAPI.INSTANCE.getConfig().get("warning-hologram-height", 1.35)
         @JvmStatic
         fun MAX_LINKING_DISTANCE() = AxMinionsAPI.INSTANCE.getConfig().get("max-linking-distance", 30)

@@ -19,6 +19,11 @@ default-minion-limit: 5
 # You should enable this, if you aren't using a supported protection plugin!
 only-owner-break: true
 
+# Should island disbanding (/is disband) or player kicking (/is kick) be blocked if there are minions on the island?
+# true - The player must manually pick up minions first (best protection against item loss)
+# false - The island can be deleted, minions will be returned to the online player's inventory (legacy mechanism)
+block-island-disband-with-minions: true
+
 # If true, only the owner of this minion can open it's GUI
 # If false, everyone, who can break blocks at said location can open the GUI of this minion
 # You should enable this, if you aren't using a supported protection plugin!

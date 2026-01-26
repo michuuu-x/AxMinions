@@ -1,5 +1,8 @@
 package com.artillexstudios.axminions.listeners
 
+import com.artillexstudios.axapi.utils.StringUtils
+import com.artillexstudios.axminions.api.config.Config
+import com.artillexstudios.axminions.api.config.Messages
 import com.artillexstudios.axminions.minions.Minions
 import com.bgsoftware.superiorskyblock.api.world.Dimension;
 import com.bgsoftware.superiorskyblock.api.events.IslandDisbandEvent
@@ -56,4 +59,39 @@ class SuperiorSkyBlock2Listener : Listener {
             }
         }
     }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onPreDisband(event: IslandDisbandEvent) {
+        if (!Config.BLOCK_ISLAND_DISBAND_WITH_MINIONS()) return
+        val player = event.player?.asPlayer()
+        if (player != null && player.hasPermission("axminions.bypass.disband")) return
+        val islandUUID = event.island.uniqueId.toString()
+        val islandIntegration = com.artillexstudios.axminions.AxMinionsPlugin.integrations.getIslandIntegration()
+        val hasMinions = Minions.getMinions().any { minion ->
+            val minionIslandUUID = islandIntegration?.getIslandAt(minion.getLocation()) ?: ""
+            minionIslandUUID == islandUUID
+        }
+        if (hasMinions) {
+            event.isCancelled = true
+            player?.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ISLAND_DISBAND_BLOCKED()))
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onPreKick(event: IslandKickEvent) {
+        if (!Config.BLOCK_ISLAND_DISBAND_WITH_MINIONS()) return
+        val islandUUID = event.island.uniqueId.toString()
+        val kickedUuid = event.target.uniqueId
+        val islandIntegration = com.artillexstudios.axminions.AxMinionsPlugin.integrations.getIslandIntegration()
+        val hasPlayerMinions = Minions.getMinions().any { minion ->
+            if (minion.getOwnerUUID() != kickedUuid) return@any false
+            val minionIslandUUID = islandIntegration?.getIslandAt(minion.getLocation()) ?: ""
+            minionIslandUUID == islandUUID
+        }
+        if (hasPlayerMinions) {
+            event.isCancelled = true
+            event.player?.asPlayer()?.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ISLAND_KICK_BLOCKED()))
+        }
+    }
+
 }

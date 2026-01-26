@@ -21,6 +21,10 @@ class Messages(file: File, stream: InputStream) {
         @JvmStatic
         fun INVALID_PLACEMENT_LOCATION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.invalid-block")
         @JvmStatic
+        fun ISLAND_DISBAND_BLOCKED() = AxMinionsAPI.INSTANCE.getMessages().get<String>("errors.island-disband-blocked")
+        @JvmStatic
+        fun ISLAND_KICK_BLOCKED() = AxMinionsAPI.INSTANCE.getMessages().get<String>("errors.island-kick-blocked")
+        @JvmStatic
         fun NO_CONTAINER_WARNING() = AxMinionsAPI.INSTANCE.getMessages().get<String>("warnings.no-container")
         @JvmStatic
         fun NO_TOOL_WARNING() = AxMinionsAPI.INSTANCE.getMessages().get<String>("warnings.no-tool")
