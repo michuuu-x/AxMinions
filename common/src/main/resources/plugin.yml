@@ -22,5 +22,5 @@ softdepend:
   - KGenerators
   - Towny
   - ItemsAdder
-  - zShop
   - PlaceholderAPI
+  - ExcellentShop

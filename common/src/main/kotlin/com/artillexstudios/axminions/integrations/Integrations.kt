@@ -13,8 +13,8 @@ import com.artillexstudios.axminions.integrations.placeholder.PlaceholderAPIInte
 import com.artillexstudios.axminions.integrations.prices.CMIIntegration
 import com.artillexstudios.axminions.integrations.prices.EconomyShopGUIIntegration
 import com.artillexstudios.axminions.integrations.prices.EssentialsIntegration
+import com.artillexstudios.axminions.integrations.prices.ExcellentShopIntegration
 import com.artillexstudios.axminions.integrations.prices.ShopGUIPlusIntegration
-//import com.artillexstudios.axminions.integrations.prices.ZShopIntegration
 import com.artillexstudios.axminions.integrations.protection.BentoBoxIntegration
 import com.artillexstudios.axminions.integrations.protection.GriefPreventionIntegration
 import com.artillexstudios.axminions.integrations.protection.IridiumSkyBlockIntegration
@@ -62,7 +62,7 @@ class Integrations : Integrations {
     override fun reload() {
         when (Config.STACKER_HOOK().lowercase(Locale.ENGLISH)) {
             "rosestacker" -> {
-                if (isPluginLoaded("RoseStacker")) {
+                if (Bukkit.getPluginManager().getPlugin("RoseStacker") != null) {
                     register(RoseStackerIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into RoseStacker!"))
@@ -72,7 +72,7 @@ class Integrations : Integrations {
             }
 
             "wildstacker" -> {
-                if (isPluginLoaded("WildStacker")) {
+                if (Bukkit.getPluginManager().getPlugin("WildStacker") != null) {
                     register(WildStackerIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into WildStacker!"))
@@ -88,7 +88,7 @@ class Integrations : Integrations {
 
         when (Config.PRICES_HOOK().lowercase(Locale.ENGLISH)) {
             "shopguiplus", "shopgui+" -> {
-                if (isPluginLoaded("ShopGuiPlus")) {
+                if (Bukkit.getPluginManager().getPlugin("ShopGUIPlus") != null) {
                     register(ShopGUIPlusIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ShopGUIPlus!"))
@@ -96,7 +96,7 @@ class Integrations : Integrations {
             }
 
             "essentials" -> {
-                if (isPluginLoaded("Essentials")) {
+                if (Bukkit.getPluginManager().getPlugin("Essentials") != null) {
                     register(EssentialsIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into Essentials!"))
@@ -104,7 +104,7 @@ class Integrations : Integrations {
             }
 
             "cmi" -> {
-                if (isPluginLoaded("CMI")) {
+                if (Bukkit.getPluginManager().getPlugin("CMI") != null) {
                     register(CMIIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into CMI!"))
@@ -118,17 +118,18 @@ class Integrations : Integrations {
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into EconomyShopGUI!"))
                 }
             }
-
-//            "zshop" -> {
-//                if (isPluginLoaded("zShop")) {
-//                    register(ZShopIntegration())
-//                }
-//            }
+            "excellentshop" -> {
+                if (Bukkit.getPluginManager().getPlugin("ExcellentShop") != null) {
+                    register(ExcellentShopIntegration())
+                    Bukkit.getConsoleSender()
+                        .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ExcellentShop!"))
+                }
+            }
         }
 
         when (Config.ECONOMY_HOOK().lowercase(Locale.ENGLISH)) {
             "vault" -> {
-                if (isPluginLoaded("Vault")) {
+                if (Bukkit.getPluginManager().getPlugin("Vault") != null) {
                     register(VaultIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into Vault!"))
@@ -136,7 +137,7 @@ class Integrations : Integrations {
             }
 
             "playerpoints" -> {
-                if (isPluginLoaded("PlayerPoints")) {
+                if (Bukkit.getPluginManager().getPlugin("PlayerPoints") != null) {
                     register(PlayerPointsIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into PlayerPoints!"))
@@ -249,18 +250,6 @@ class Integrations : Integrations {
             }
         }
         integration.register()
-    }
-
-    private fun isPluginLoaded(pluginName: String): Boolean {
-        if (Bukkit.getPluginManager().getPlugin(pluginName) != null) {
-//            Bukkit.getConsoleSender()
-//                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into $pluginName!"))
-            return true
-        } else {
-            Bukkit.getConsoleSender()
-                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] <#FF0000>$pluginName is set in the config.yml, but it isn't installed! Setting provider to the default one!"))
-            return false
-        }
     }
 
     override fun deregister(integration: Integration) {

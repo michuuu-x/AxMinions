@@ -22,6 +22,7 @@ dependencies {
     compileOnly 'com.bgsoftware:WildStackerAPI:2023.2'
     compileOnly 'net.essentialsx:EssentialsX:2.19.0'
     compileOnly 'com.github.Gypopo:EconomyShopGUI-API:1.7.0'
+    compileOnly 'su.nightexpress.excellentshop:Core:4.22.0'
     compileOnly 'com.github.brcdev-minecraft:shopgui-api:3.0.0'
     compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.1') {
         exclude group: "org.spigotmc"

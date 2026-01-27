@@ -155,7 +155,7 @@ hooks:
   stacker: "none"
   # Supported economy providers: Vault, PlayerPoints, custom
   economy: "Vault"
-  # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, CMI, custom
+  # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, ExcellentShop, CMI, custom
   prices: "Essentials"
 
 charge:

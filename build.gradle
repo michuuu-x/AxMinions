@@ -101,6 +101,10 @@ allprojects {
         }
 
         maven {
+            url = uri('https://repo.nightexpressdev.com/releases')
+        }
+
+        maven {
             url = uri('https://repo.codemc.org/repository/maven-snapshots')
         }
 
