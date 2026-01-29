@@ -13,6 +13,8 @@ import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.nms.NMSHandler
+import com.nexomc.nexo.api.NexoBlocks
+import com.nexomc.nexo.api.NexoItems.itemFromId
 import dev.lone.itemsadder.api.CustomBlock
 import me.kryniowesegryderiusz.kgenerators.Main
 import org.bukkit.Bukkit
@@ -120,6 +122,28 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                         }
                     }
 
+                    if (AxMinionsPlugin.integrations.nexoIntegration) {
+                        // 1. Sprawdź czy to blok Nexo
+                        if (NexoBlocks.isCustomBlock(location.block)) {
+                            // 2. Pobierz ID bloku
+                            val mechanic = NexoBlocks.customBlockMechanic(location.block)
+                            val itemId = mechanic?.itemID
+
+                            // 3. Pobierz ItemStack z Nexo (odpowiednik dropu)
+                            val itemStack = itemFromId(itemId)?.build()
+
+                            if (itemStack != null) {
+                                // 4. Dodaj do statystyk i ekwipunku miniona
+                                amount += itemStack.amount
+                                minion.addToContainerOrDrop(itemStack)
+                            }
+
+                            // 5. Usuń blok ze świata (false = nie dropi itemu na ziemię, bo już go dodaliśmy)
+                            NexoBlocks.remove(location, null, false)
+                            return@fastFor
+                        }
+                    }
+
                     val canBreak = if (generatorMode) {
                         MinionUtils.isStoneGenerator(location)
                     } else {
@@ -168,6 +192,28 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                                     }
                                 }
 
+                                if (AxMinionsPlugin.integrations.nexoIntegration) {
+                                    // 1. Sprawdź czy to blok Nexo
+                                    if (NexoBlocks.isCustomBlock(location.block)) {
+                                        // 2. Pobierz ID bloku
+                                        val mechanic = NexoBlocks.customBlockMechanic(location.block)
+                                        val itemId = mechanic?.itemID
+
+                                        // 3. Pobierz ItemStack z Nexo (odpowiednik dropu)
+                                        val itemStack = itemFromId(itemId)?.build()
+
+                                        if (itemStack != null) {
+                                            // 4. Dodaj do statystyk i ekwipunku miniona
+                                            amount += itemStack.amount
+                                            minion.addToContainerOrDrop(itemStack)
+                                        }
+
+                                        // 5. Usuń blok ze świata (false = nie dropi itemu na ziemię, bo już go dodaliśmy)
+                                        NexoBlocks.remove(location, null, false)
+                                        return@fastFor
+                                    }
+                                }
+
                                 val canBreak = if (generatorMode) {
                                     MinionUtils.isStoneGenerator(location)
                                 } else {
@@ -212,6 +258,28 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                                     } else {
                                         return@fastFor
                                     }
+                                }
+                            }
+
+                            if (AxMinionsPlugin.integrations.nexoIntegration) {
+                                // 1. Sprawdź czy to blok Nexo
+                                if (NexoBlocks.isCustomBlock(location.block)) {
+                                    // 2. Pobierz ID bloku
+                                    val mechanic = NexoBlocks.customBlockMechanic(location.block)
+                                    val itemId = mechanic?.itemID
+
+                                    // 3. Pobierz ItemStack z Nexo (odpowiednik dropu)
+                                    val itemStack = itemFromId(itemId)?.build()
+
+                                    if (itemStack != null) {
+                                        // 4. Dodaj do statystyk i ekwipunku miniona
+                                        amount += itemStack.amount
+                                        minion.addToContainerOrDrop(itemStack)
+                                    }
+
+                                    // 5. Usuń blok ze świata (false = nie dropi itemu na ziemię, bo już go dodaliśmy)
+                                    NexoBlocks.remove(location, null, false)
+                                    return@fastFor
                                 }
                             }
 
@@ -275,6 +343,21 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                             }
                         }
 
+                        if (AxMinionsPlugin.integrations.nexoIntegration) {
+                            if (NexoBlocks.isCustomBlock(location.block)) {
+                                val mechanic = NexoBlocks.customBlockMechanic(location.block)
+                                val itemId = mechanic?.itemID
+                                val itemStack = itemFromId(itemId)?.build()
+
+                                if (itemStack != null) {
+                                    amount += itemStack.amount
+                                    minion.addToContainerOrDrop(itemStack)
+                                }
+                                NexoBlocks.remove(location, null, false)
+                                return@fastFor
+                            }
+                        }
+
                         val canBreak = if (generatorMode) {
                             MinionUtils.isStoneGenerator(location)
                         } else {
@@ -330,6 +413,20 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                                 }
                                 minion.addToContainerOrDrop(drops)
                                 block.remove()
+                                return@fastFor
+                            }
+                        }
+
+                        if (AxMinionsPlugin.integrations.nexoIntegration) {
+                            if (NexoBlocks.isCustomBlock(location.block)) {
+                                val mechanic = NexoBlocks.customBlockMechanic(location.block)
+                                val itemId = mechanic?.itemID
+                                val itemStack = itemFromId(itemId)?.build()
+                                if (itemStack != null) {
+                                    amount += itemStack.amount
+                                    minion.addToContainerOrDrop(itemStack)
+                                }
+                                NexoBlocks.remove(location, null, false)
                                 return@fastFor
                             }
                         }

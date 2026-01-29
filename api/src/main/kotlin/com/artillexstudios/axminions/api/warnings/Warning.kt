@@ -25,7 +25,7 @@ abstract class Warning(private val name: String) {
             val page = hologram.createPage(HologramTypes.TEXT)
             page.setEntityMetaHandler { meta ->
                 val textDisplayMeta = meta as TextDisplayMeta
-                textDisplayMeta.seeThrough(true)
+                textDisplayMeta.seeThrough(false)
                 textDisplayMeta.alignment(TextDisplayMeta.Alignment.CENTER)
                 textDisplayMeta.billboardConstrain(DisplayMeta.BillboardConstrain.CENTER)
             }

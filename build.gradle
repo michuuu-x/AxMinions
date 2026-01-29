@@ -3,7 +3,7 @@ plugins {
     id 'com.gradleup.shadow' version "9.2.2"
     id 'maven-publish'
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.23'
+    id 'org.jetbrains.kotlin.jvm' version '2.0.0'
 }
 
 group = 'com.artillexstudios.axminions'
@@ -73,6 +73,10 @@ allprojects {
         }
 
         maven {
+            url = uri('https://repo.nexomc.com/releases')
+        }
+
+        maven {
             url = uri('https://repo.bg-software.com/repository/api/' )
         }
 
@@ -130,7 +134,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+        compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.0.0'
         implementation(files("${rootProject.projectDir}/libs/AxAPI-1.4.749-all.jar"))
     }
 

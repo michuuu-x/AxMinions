@@ -9,14 +9,13 @@ import com.artillexstudios.axminions.api.utils.MinionUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.minions.MinionTicker
+import com.nexomc.nexo.api.NexoBlocks
+import com.nexomc.nexo.api.NexoItems.itemFromId
 import dev.lone.itemsadder.api.CustomBlock
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import kotlin.math.roundToInt
 import org.bukkit.Material
-import org.bukkit.block.Block
-import org.bukkit.block.BlockFace
-import org.bukkit.block.DoubleChest
 import org.bukkit.block.data.Ageable
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.DoubleChestInventory
@@ -104,6 +103,25 @@ class FarmerMinionType : MinionType("farmer", AxMinionsPlugin.INSTANCE.getResour
                     return@fastFor
                 }
             }
+
+            if (AxMinionsPlugin.integrations.nexoIntegration) {
+                if (NexoBlocks.isCustomBlock(block)) {
+                    val mechanic = NexoBlocks.customBlockMechanic(block)
+                    val itemId = mechanic?.itemID
+                    val preHarvestEvent = PreFarmerMinionHarvestEvent(minion, block)
+                    Bukkit.getPluginManager().callEvent(preHarvestEvent)
+                    if (preHarvestEvent.isCancelled) return@fastFor
+                    val itemStack = if (itemId != null) itemFromId(itemId)?.build() else null
+
+                    if (itemStack != null) {
+                        size += itemStack.amount
+                        drops.add(itemStack)
+                        NexoBlocks.remove(location, null, false)
+                    }
+                    return@fastFor
+                }
+            }
+
 
             when (block.type) {
                 Material.CACTUS, Material.SUGAR_CANE, Material.BAMBOO -> {

@@ -38,6 +38,7 @@ class Integrations : Integrations {
     private val protectionIntegrations = com.artillexstudios.axminions.integrations.protection.ProtectionIntegrations()
     internal var kGeneratorsIntegration = false
     internal var itemsAdderIntegration = false
+    internal var nexoIntegration = false
 
     override fun getStackerIntegration(): StackerIntegration {
         return stackerIntegration
@@ -198,10 +199,10 @@ class Integrations : Integrations {
                 .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into KGenerators!"))
         }
 
-        if (Bukkit.getPluginManager().getPlugin("ItemsAdder") != null) {
-            itemsAdderIntegration = true
+        if (Bukkit.getPluginManager().getPlugin("Nexo") != null) {
+            nexoIntegration = true
             Bukkit.getConsoleSender()
-                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ItemsAdder!"))
+                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into Nexo!"))
         }
 
         if (Bukkit.getPluginManager().getPlugin("ItemsAdder") != null) {
