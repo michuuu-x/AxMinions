@@ -135,7 +135,7 @@ allprojects {
 
     dependencies {
         compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.0.0'
-        implementation(files("${rootProject.projectDir}/libs/AxAPI-1.4.749-all.jar"))
+        implementation("com.artillexstudios.axapi:axapi:1.4.840:all")
     }
 
 if (project.name != "api") {
