@@ -47,5 +47,5 @@ Fixed an issue where minions with `pull-tools-from-chest: true` would take all m
 | 9  | https://github.com/Artillex-Studios/Issues/issues/374 | ✔️ |
 | 10 | https://github.com/Artillex-Studios/Issues/issues/360 | ✔️ |
 | 11 | https://github.com/Artillex-Studios/Issues/issues/631 | ✔️ |
-| 12 | https://github.com/Artillex-Studios/Issues/issues/871 | 🔧 To fix |
+| 12 | https://github.com/Artillex-Studios/Issues/issues/871 | ✔️ |
 

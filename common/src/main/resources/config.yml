@@ -153,10 +153,14 @@ database:
 hooks:
   # Supported stacker plugins: WildStacker, RoseStacker, none
   stacker: "none"
-  # Supported economy providers: Vault, PlayerPoints, custom
+  # Supported economy providers: Vault, PlayerPoints, CoinsEngine custom
   economy: "Vault"
   # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, ExcellentShop, CMI, custom
   prices: "Essentials"
+
+currency:
+  coinsengine:
+    currency-name: "Coins"
 
 charge:
   enabled: false

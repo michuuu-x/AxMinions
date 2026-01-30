@@ -8,6 +8,8 @@ softdepend:
   - WildStacker
   - CMI
   - Vault
+  - PlayerPoints
+  - CoinsEngine
   - EconomyShopGUI
   - Essentials
   - ShopGUIPlus

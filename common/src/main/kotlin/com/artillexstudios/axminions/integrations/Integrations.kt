@@ -7,6 +7,7 @@ import com.artillexstudios.axminions.api.exception.InvalidIntegrationException
 import com.artillexstudios.axminions.api.integrations.Integration
 import com.artillexstudios.axminions.api.integrations.Integrations
 import com.artillexstudios.axminions.api.integrations.types.*
+import com.artillexstudios.axminions.integrations.economy.CoinsEngineIntegration
 import com.artillexstudios.axminions.integrations.economy.PlayerPointsIntegration
 import com.artillexstudios.axminions.integrations.economy.VaultIntegration
 import com.artillexstudios.axminions.integrations.placeholder.PlaceholderAPIIntegration
@@ -142,6 +143,14 @@ class Integrations : Integrations {
                     register(PlayerPointsIntegration())
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into PlayerPoints!"))
+                }
+            }
+
+            "coinsengine" -> {
+                if (Bukkit.getPluginManager().getPlugin("CoinsEngine") != null) {
+                    register(CoinsEngineIntegration())
+                    Bukkit.getConsoleSender()
+                        .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into CoinsEngine!"))
                 }
             }
         }

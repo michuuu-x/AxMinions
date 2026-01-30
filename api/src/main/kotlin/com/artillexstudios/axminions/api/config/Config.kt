@@ -23,6 +23,8 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun WARNING_HOLOGRAM_HEIGHT() = AxMinionsAPI.INSTANCE.getConfig().get("warning-hologram-height", 1.35)
         @JvmStatic
+        fun COINSENGINE_CURRENCY() = AxMinionsAPI.INSTANCE.getConfig().get("currency.coinsengine.currency-name", "coins")
+        @JvmStatic
         fun MAX_LINKING_DISTANCE() = AxMinionsAPI.INSTANCE.getConfig().get("max-linking-distance", 30)
         @JvmStatic
         fun DEFAULT_MINION_LIMIT() = AxMinionsAPI.INSTANCE.getConfig().get("default-minion-limit", 5)
