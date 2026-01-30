@@ -13,7 +13,7 @@ class PlacedLogListener : Listener {
     fun onBlockPlace(event: BlockPlaceEvent) {
         val type: Material = event.blockPlaced.type
         val name = type.name
-        if (name.endsWith("_LOG") || name.endsWith("_WOOD")) {
+        if (name.endsWith("_LOG") || name.endsWith("_STEM") || name.endsWith("_WOOD")) {
             PlacedLogTracker.markPlaced(event.blockPlaced.location)
         }
     }
@@ -22,7 +22,7 @@ class PlacedLogListener : Listener {
     fun onBlockBreak(event: BlockBreakEvent) {
         val type: Material = event.block.type
         val name = type.name
-        if (name.endsWith("_LOG") || name.endsWith("_WOOD")) {
+        if (name.endsWith("_LOG") || name.endsWith("_STEM") || name.endsWith("_WOOD")) {
             PlacedLogTracker.unmark(event.block.location)
         }
     }

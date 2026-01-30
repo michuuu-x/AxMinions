@@ -119,6 +119,14 @@ class LumberMinionType : MinionType("lumber", AxMinionsPlugin.INSTANCE.getResour
                 Material.CHERRY_SAPLING
             }
 
+            "WARPED_STEM" -> {
+                Material.WARPED_FUNGUS
+            }
+
+            "CRIMSON_STEM" -> {
+                Material.CRIMSON_FUNGUS
+            }
+
             else -> Material.OAK_SAPLING
         }
     }

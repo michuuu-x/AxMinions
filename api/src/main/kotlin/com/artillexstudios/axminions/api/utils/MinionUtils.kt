@@ -78,7 +78,7 @@ object MinionUtils {
             val block = queue.poll()
 
             val type = block.type.toString()
-            if (type.endsWith("_WOOD") || type.endsWith("_LOG")) {
+            if (type.endsWith("_WOOD") || type.endsWith("_STEM") || type.endsWith("_LOG")) {
                 if (PlacedLogTracker.isPlayerPlaced(block.location)) {
                     continue
                 }
