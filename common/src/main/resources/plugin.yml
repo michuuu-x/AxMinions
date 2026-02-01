@@ -11,6 +11,7 @@ softdepend:
   - PlayerPoints
   - CoinsEngine
   - EconomyShopGUI
+  - EconomyShopGUI-Premium
   - Essentials
   - ShopGUIPlus
   - BentoBox

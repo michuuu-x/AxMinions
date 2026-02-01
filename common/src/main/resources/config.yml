@@ -158,6 +158,7 @@ hooks:
   # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, ExcellentShop, CMI, custom
   prices: "Essentials"
 
+# Custom currency name for CoinsEngine
 currency:
   coinsengine:
     currency-name: "Coins"

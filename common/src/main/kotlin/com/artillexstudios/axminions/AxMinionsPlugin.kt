@@ -36,7 +36,6 @@ import com.artillexstudios.axminions.minions.miniontype.MinerMinionType
 import com.artillexstudios.axminions.minions.miniontype.SellerMinionType
 import com.artillexstudios.axminions.minions.miniontype.SlayerMinionType
 import java.io.File
-import com.artillexstudios.axminions.minions.miniontype.CrafterMinionType
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
 import revxrsal.commands.bukkit.BukkitCommandHandler
@@ -53,7 +52,7 @@ class AxMinionsPlugin : AxPlugin() {
 
     override fun dependencies(manager: DependencyManagerWrapper) {
         manager.dependency("org{}jetbrains{}kotlin:kotlin-stdlib:2.0.0")
-        manager.dependency("com{}h2database:h2:2.2.220")
+        manager.dependency("com{}h2database:h2:2.4.240")
         manager.relocate("org{}jetbrains{}kotlin", "com.artillexstudios.axminions.libs.kotlin")
         manager.relocate("org{}h2", "com.artillexstudios.axminions.libs.h2")
     }
@@ -83,7 +82,6 @@ class AxMinionsPlugin : AxPlugin() {
 
         MinionTypes.also {
             it.register(CollectorMinionType())
-            it.register(CrafterMinionType())
             it.register(FarmerMinionType())
             it.register(MinerMinionType())
             it.register(LumberMinionType())

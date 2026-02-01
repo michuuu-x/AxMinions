@@ -31,7 +31,6 @@ dependencies {
     implementation project(path: ":nms:v1_21_R5", configuration: "reobf")
     implementation project(path: ":nms:v1_21_R6", configuration: "reobf")
     implementation project(path: ":nms:v1_21_R7", configuration: "reobf")
-    implementation project(path: ":nms:v1_21_R7_paper", configuration: "reobf")
 }
 
 allprojects {
@@ -67,6 +66,7 @@ allprojects {
         maven {
             url = uri('https://hub.spigotmc.org/nexus/content/repositories/snapshots/')
         }
+
 
         maven {
             url = uri('https://repo.rosewooddev.io/repository/public/' )
@@ -117,6 +117,10 @@ allprojects {
         }
 
         maven {
+            url = uri('https://repo.codemc.io/repository/bentoboxworld/')
+        }
+
+        maven {
             url = uri('https://repo.alessiodp.com/releases/')
         }
 
@@ -135,7 +139,7 @@ allprojects {
 
     dependencies {
         compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.0.0'
-        implementation("com.artillexstudios.axapi:axapi:1.4.840:all")
+        implementation("com.artillexstudios.axapi:axapi:1.4.841:all")
     }
 
 if (project.name != "api") {
