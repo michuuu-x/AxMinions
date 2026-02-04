@@ -70,7 +70,7 @@ directions:
   west: "West"
 
 charge:
-  charge: "<green>You have added <white>30 minutes</white> of charge to your minion!"
+  charge: "<green>You have added <white>1 hour</white> of charge to your minion!"
   not-enough-money: "<red>You don't have enough money to charge this minion!"
   not-enough-time-passed: "<red>Your minion is nearly fully charged! Wait a bit before charging it again!"
 
