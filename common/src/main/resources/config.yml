@@ -26,7 +26,7 @@ block-island-disband-with-minions: true
 
 # If true, only the owner of this minion can open it's GUI
 # If false, everyone, who can break blocks at said location can open the GUI of this minion
-# You should enable this, if you aren't using a supported protection plugin!
+# You should enable this, if you aren't using a supported protection plugin
 only-owner-gui: true
 
 # Should minions show holograms if they have an issue?
@@ -153,22 +153,23 @@ database:
 hooks:
   # Supported stacker plugins: WildStacker, RoseStacker, none
   stacker: "none"
-  # Supported economy providers: Vault, PlayerPoints, CoinsEngine custom
+  # Supported economy providers: Vault, PlayerPoints, CoinsEngine, custom
   economy: "Vault"
   # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, ExcellentShop, CMI, custom
   prices: "Essentials"
 
-# Custom currency name for CoinsEngine
+# Custom currency name
 currency:
   coinsengine:
     currency-name: "Coins"
 
+# System related to minion charging
 charge:
-  enabled: false
-  amount: 1800 # in seconds
-  max-charge: 1440 # in minutes
-  price: 10000
-  minimum-charge: 30 # in seconds
+  enabled: false # true, the minion will require charging to work / false, the minion will never require charging
+  amount: 3600 # in seconds
+  max-charge: 720 # in minutes
+  price: 5000
+  minimum-charge: 300 # in seconds
   items:
     1:
       type: coal
