@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ClientInformation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.level.storage.loot.BuiltInLootTables
 import net.minecraft.world.level.storage.loot.LootParams
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets
@@ -47,7 +48,8 @@ object LootHandler {
     }
 
     // NOWA METODA: Zwraca listę dropów "Player Kill"
-    fun dropPlayerKillLoot(victim: Entity): List<ItemStack> {
+    // Obsługuje Looting enchantment - przekazujemy narzędzie miniona
+    fun dropPlayerKillLoot(victim: Entity, tool: ItemStack? = null): List<ItemStack> {
         val drops = ArrayList<ItemStack>()
 
         val nmsVictim = (victim as CraftEntity).handle
@@ -62,7 +64,13 @@ object LootHandler {
             ClientInformation.createDefault()
         )
 
-        // 2. Parametry lootu
+        // 2. Ustawiamy narzędzie z Looting enchantment w ręce FakePlayera
+        if (tool != null) {
+            val nmsItem = CraftItemStack.asNMSCopy(tool)
+            fakePlayer.setItemSlot(EquipmentSlot.MAINHAND, nmsItem)
+        }
+
+        // 3. Parametry lootu
         val lootParams = LootParams.Builder(world)
             .withParameter(LootContextParams.ORIGIN, nmsVictim.position())
             .withParameter(LootContextParams.THIS_ENTITY, nmsVictim)
@@ -71,7 +79,7 @@ object LootHandler {
             .withParameter(LootContextParams.LAST_DAMAGE_PLAYER, fakePlayer)
             .create(LootContextParamSets.ENTITY)
 
-        // 3. Pobranie i obsługa tabeli
+        // 4. Pobranie i obsługa tabeli
         val lootTableKey = nmsVictim.getLootTable().orElse(null) ?: return emptyList()
         val lootTable = world.server.reloadableRegistries().getLootTable(lootTableKey)
 
@@ -79,7 +87,7 @@ object LootHandler {
             drops.add(CraftItemStack.asBukkitCopy(nmsItem))
         }
 
-        // 4. XP
+        // 5. XP
         val xpAmount = nmsVictim.getExperienceReward(world, fakePlayer)
         if (xpAmount > 0) {
             (victim.world.spawn(victim.location, ExperienceOrb::class.java)).experience = xpAmount

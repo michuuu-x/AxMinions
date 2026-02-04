@@ -110,8 +110,8 @@ object DamageHandler {
                 val finalDamage = f.toFloat()
 
                 if (nmsEntity is LivingEntity && (nmsEntity.health - finalDamage) <= 0) {
-                    // 1. Pobieramy listę itemów (symulacja gracza)
-                    val drops = LootHandler.dropPlayerKillLoot(entity)
+                    // 1. Pobieramy listę itemów (symulacja gracza) z obsługą Looting
+                    val drops = LootHandler.dropPlayerKillLoot(entity, source.getTool())
 
                     // 2. Dodajemy do miniona
                     drops.forEach { item ->

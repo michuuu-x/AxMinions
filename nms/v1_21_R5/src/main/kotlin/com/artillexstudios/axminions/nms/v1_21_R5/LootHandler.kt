@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ClientInformation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.level.storage.loot.BuiltInLootTables
 import net.minecraft.world.level.storage.loot.LootParams
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets
@@ -47,7 +48,8 @@ object LootHandler {
     }
 
     // ZMIANA: Zwraca listę ItemStack zamiast void
-    fun dropPlayerKillLoot(victim: Entity): List<ItemStack> {
+    // Obsługuje Looting enchantment - przekazujemy narzędzie miniona
+    fun dropPlayerKillLoot(victim: Entity, tool: ItemStack? = null): List<ItemStack> {
         val drops = ArrayList<ItemStack>()
 
         val nmsVictim = (victim as CraftEntity).handle
@@ -62,7 +64,13 @@ object LootHandler {
             ClientInformation.createDefault()
         )
 
-        // 2. Budujemy kontekst lootu z graczem jako zabójcą
+        // 2. Ustawiamy narzędzie z Looting enchantment w ręce FakePlayera
+        if (tool != null) {
+            val nmsItem = CraftItemStack.asNMSCopy(tool)
+            fakePlayer.setItemSlot(EquipmentSlot.MAINHAND, nmsItem)
+        }
+
+        // 3. Budujemy kontekst lootu z graczem jako zabójcą
         val lootParams = LootParams.Builder(world)
             .withParameter(LootContextParams.ORIGIN, nmsVictim.position())
             .withParameter(LootContextParams.THIS_ENTITY, nmsVictim)
@@ -71,16 +79,16 @@ object LootHandler {
             .withParameter(LootContextParams.LAST_DAMAGE_PLAYER, fakePlayer)
             .create(LootContextParamSets.ENTITY)
 
-        // 3. Pobieramy tabelę lootu
+        // 4. Pobieramy tabelę lootu
         val lootTableKey = nmsVictim.getLootTable().orElse(null) ?: return emptyList()
         val lootTable = world.server.reloadableRegistries().getLootTable(lootTableKey)
 
-        // 4. Generujemy itemy i dodajemy do listy (zamiast rzucać na ziemię)
+        // 5. Generujemy itemy i dodajemy do listy (zamiast rzucać na ziemię)
         lootTable.getRandomItems(lootParams).forEach { nmsItem ->
             drops.add(CraftItemStack.asBukkitCopy(nmsItem))
         }
 
-        // 5. Generujemy XP (XP wypada normalnie na ziemię)
+        // 6. Generujemy XP (XP wypada normalnie na ziemię)
         val xpAmount = nmsVictim.getExperienceReward(world, fakePlayer)
         if (xpAmount > 0) {
             (victim.world.spawn(victim.location, ExperienceOrb::class.java)).experience = xpAmount

@@ -14,6 +14,9 @@
 #### 🗡️ Slayer Minion Player Kill Drops (fixed in versions 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11) 
 Slayer minion kills are now registered as player kills to enable mob drops that require a player killer (e.g., Blaze Rods, Wither Skeleton Skulls, Piglin gold items).
 
+#### ⚔️ Looting Enchantment Support (versions 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11)
+Slayer minions now fully support the Looting enchantment on their equipped weapon. 
+
 #### 🧱 Minion Placement Validation (MinionPlaceListener)
 Improved validation when placing minions:
 - **Full hitbox check** (`hasFullHitbox`) — Minions can only be placed on blocks with a full hitbox. Non-full blocks are rejected:
