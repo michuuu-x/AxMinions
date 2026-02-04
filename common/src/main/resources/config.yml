@@ -224,7 +224,7 @@ gui:
         - ""
         - " <gray>- <white>Current charge: <#FFCC00><charge>"
         - ""
-        - "<#FB8E08><b>(!)</b> Click here to charge your minion for <white>30 minutes</white>!"
+        - "<#FB8E08><b>(!)</b> Click here to charge your minion for <white>1 hour</white>!"
       slot: 9
 
     # These settings are minion-specific, you can edit them in each minion's file!
