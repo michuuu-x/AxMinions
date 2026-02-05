@@ -4,6 +4,7 @@ import com.artillexstudios.axapi.AxPlugin
 import com.artillexstudios.axapi.dependencies.DependencyManagerWrapper
 import com.artillexstudios.axapi.executor.ThreadedQueue
 import com.artillexstudios.axapi.scheduler.Scheduler
+import com.artillexstudios.axapi.utils.StringUtils
 import com.artillexstudios.axapi.utils.featureflags.FeatureFlags
 import com.artillexstudios.axminions.api.AxMinionsAPI
 import com.artillexstudios.axminions.api.AxMinionsAPIImpl
@@ -171,6 +172,8 @@ class AxMinionsPlugin : AxPlugin() {
         if (Config.DATABASE_TYPE().equals("H2", true)) {
             dataHandler = H2DataHandler()
             dataHandler.setup()
+            Bukkit.getConsoleSender()
+                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Using database type: ${dataHandler.getType()}"))
         }
     }
 }

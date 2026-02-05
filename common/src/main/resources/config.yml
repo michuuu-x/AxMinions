@@ -50,6 +50,66 @@ use-durability: true
 # If the minion should pull new tools from the chest it's connected to
 pull-tools-from-chest: false
 
+# If the minion should work when the owner is offline (only if the chunk is loaded)
+work-when-owner-offline: true
+
+# The maximum amount of blocks a single lumber minion may break at a time
+max-breaks-per-tick: 200
+
+# What type of message we should send when the upgrade fails
+# due to insufficient funds
+# Possible options: chat, title, subtitle, actionbar
+upgrade-fail: "chat"
+
+# The sound played when you upgrade a minion
+# set to "" to disable!
+# For a list of sounds visit: https://jd.papermc.io/paper/1.20/org/bukkit/Sound.html
+upgrade-sound: "ENTITY_PLAYER_LEVELUP"
+
+database:
+  # Supported database types: H2
+  type: "H2"
+
+hooks:
+  # Supported stacker plugins: WildStacker, RoseStacker, none
+  stacker: "none"
+  # Supported economy providers: Vault, PlayerPoints, CoinsEngine, custom
+  economy: "Vault"
+  # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, ExcellentShop, CMI, custom
+  prices: "Essentials"
+
+# Custom currency name
+currency:
+  coinsengine:
+    currency-name: "Coins"
+
+# System related to minion charging
+charge:
+  enabled: false # true, the minion will require charging to work / false, the minion will never require charging
+  amount: 3600 # in seconds
+  max-charge: 720 # in minutes
+  price: 5000
+  minimum-charge: 300 # in seconds
+  items:
+    1:
+      type: coal
+      name: "<red>Fuel"
+      charge: 1000 # In seconds
+
+# 1 - HH:MM:SS, for example 01:25:35
+# 2 - short format, for example 20m
+# 3 - text format, for example 01h 25m 35s
+timer-format: 1
+
+# Control over how numerical data is formatted and rounded.
+# Allowed modes: UP, DOWN, CEILING, FLOOR, HALF_UP, HALF_DOWN, HALF_EVEN, UNNECESSARY
+# A tutorial can be found here: https://docs.oracle.com/javase/tutorial/i18n/format/decimalFormat.html
+number:
+  prices-format:
+    format: "#,###.##"
+    rounding: "half_even"
+    locale: "en-US"
+
 # Blocks and materials considered collision for placement checks
 collision:
   # List of exact material names (e.g., CHEST, HOPPER).
@@ -130,66 +190,7 @@ collision:
     - TRIPWIRE
     - STRING
 
-# If the minion should work when the owner is offline (only if the chunk is loaded)
-work-when-owner-offline: true
-
-# The maximum amount of blocks a single lumber minion may break at a time
-max-breaks-per-tick: 200
-
-# What type of message we should send when the upgrade fails
-# due to insufficient funds
-# Possible options: chat, title, subtitle, actionbar
-upgrade-fail: "chat"
-
-# The sound played when you upgrade a minion
-# set to "" to disable!
-# For a list of sounds visit: https://jd.papermc.io/paper/1.20/org/bukkit/Sound.html
-upgrade-sound: "ENTITY_PLAYER_LEVELUP"
-
-database:
-  # Can be H2 (SqLite support is planned)
-  type: "H2"
-
-hooks:
-  # Supported stacker plugins: WildStacker, RoseStacker, none
-  stacker: "none"
-  # Supported economy providers: Vault, PlayerPoints, CoinsEngine, custom
-  economy: "Vault"
-  # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, ExcellentShop, CMI, custom
-  prices: "Essentials"
-
-# Custom currency name
-currency:
-  coinsengine:
-    currency-name: "Coins"
-
-# System related to minion charging
-charge:
-  enabled: false # true, the minion will require charging to work / false, the minion will never require charging
-  amount: 3600 # in seconds
-  max-charge: 720 # in minutes
-  price: 5000
-  minimum-charge: 300 # in seconds
-  items:
-    1:
-      type: coal
-      name: "<red>Fuel"
-      charge: 1000 # In seconds
-
-# 1 - HH:MM:SS, for example 01:25:35
-# 2 - short format, for example 20m
-# 3 - text format, for example 01h 25m 35s
-timer-format: 1
-
-# Control over how numerical data is formatted and rounded.
-# Allowed modes: UP, DOWN, CEILING, FLOOR, HALF_UP, HALF_DOWN, HALF_EVEN, UNNECESSARY
-# A tutorial can be found here: https://docs.oracle.com/javase/tutorial/i18n/format/decimalFormat.html
-number:
-  prices-format:
-    format: "#,###.##"
-    rounding: "half_even"
-    locale: "en-US"
-
+# Minion GUI settings
 gui:
   size: 27
   items:

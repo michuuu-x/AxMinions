@@ -31,7 +31,7 @@ class H2DataHandler : DataHandler {
         config.setDataSourceClassName("org.h2.jdbcx.JdbcDataSource")
         config.addDataSourceProperty("url", "jdbc:h2:async:./${AxMinionsPlugin.INSTANCE.dataFolder}/data")
         config.setAutoCommit(true)
-        dataSource = HikariDataSource(config) 
+        dataSource = HikariDataSource(config)
 
         dataSource.connection.use { connection ->
             connection.prepareStatement("CREATE TABLE IF NOT EXISTS `axminions_types`(`id` INT AUTO_INCREMENT PRIMARY KEY, `name` VARCHAR(64));")
@@ -259,7 +259,7 @@ class H2DataHandler : DataHandler {
 
         val extra = getExtraSlots(minion.getOwnerUUID())
 
-        dataSource.connection.use { connection ->       
+        dataSource.connection.use { connection ->
             connection.prepareStatement(
                 "MERGE INTO `axminions_users`(`uuid`, `name`, `island_slots`) KEY(`uuid`) VALUES (?,?,?);",
                 Statement.RETURN_GENERATED_KEYS
