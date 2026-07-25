@@ -37,7 +37,6 @@ class Integrations : Integrations {
     private var economyIntegration: EconomyIntegration? = null
     private var islandIntegration: IslandIntegration? = null
     private val protectionIntegrations = com.artillexstudios.axminions.integrations.protection.ProtectionIntegrations()
-    internal var kGeneratorsIntegration = false
     internal var itemsAdderIntegration = false
 
     override fun getStackerIntegration(): StackerIntegration {
@@ -198,12 +197,6 @@ class Integrations : Integrations {
             register(KingdomsXIntegration())
             Bukkit.getConsoleSender()
                 .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into KingdomsX!"))
-        }
-
-        if (Bukkit.getPluginManager().getPlugin("KGenerators") != null) {
-            kGeneratorsIntegration = true
-            Bukkit.getConsoleSender()
-                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into KGenerators!"))
         }
 
         if (Bukkit.getPluginManager().getPlugin("ItemsAdder") != null) {

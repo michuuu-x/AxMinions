@@ -4,7 +4,6 @@ import com.artillexstudios.axapi.scheduler.Scheduler
 import com.artillexstudios.axapi.scheduler.impl.FoliaScheduler
 import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.AxMinionsAPI
-import com.artillexstudios.axminions.api.config.Config
 import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.utils.LocationUtils
@@ -15,7 +14,6 @@ import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.utils.Enchantments
 import com.artillexstudios.axminions.nms.NMSHandler
 import dev.lone.itemsadder.api.CustomBlock
-import me.kryniowesegryderiusz.kgenerators.Main
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
@@ -113,23 +111,6 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
         when (getConfig().getString("mode").lowercase(Locale.ENGLISH)) {
             "sphere" -> {
                 LocationUtils.getAllBlocksInRadius(minion.getLocation(), minion.getRange(), false).fastFor { location ->
-                    if (AxMinionsPlugin.integrations.kGeneratorsIntegration) {
-                        val gen = Main.getPlacedGenerators().getLoaded(location)
-                        if (gen != null) {
-                            val possible = gen.isBlockPossibleToMine(location)
-
-                            if (possible) {
-                                minion.addToContainerOrDrop(
-                                    gen.lastGeneratedObject.customDrops?.item?.clone() ?: return@fastFor
-                                )
-                                gen.scheduleGeneratorRegeneration()
-                                return@fastFor
-                            } else {
-                                return@fastFor
-                            }
-                        }
-                    }
-
                     val canBreak = if (generatorMode) {
                         MinionUtils.isStoneGenerator(location)
                     } else {
@@ -161,23 +142,6 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                     asyncExecutor!!.execute {
                         LocationUtils.getAllBlocksInRadius(minion.getLocation(), minion.getRange(), false)
                             .fastFor { location ->
-                                if (AxMinionsPlugin.integrations.kGeneratorsIntegration) {
-                                    val gen = Main.getPlacedGenerators().getLoaded(location)
-                                    if (gen != null) {
-                                        val possible = gen.isBlockPossibleToMine(location)
-
-                                        if (possible) {
-                                            minion.addToContainerOrDrop(
-                                                gen.lastGeneratedObject.customDrops?.item?.clone() ?: return@fastFor
-                                            )
-                                            gen.scheduleGeneratorRegeneration()
-                                            return@fastFor
-                                        } else {
-                                            return@fastFor
-                                        }
-                                    }
-                                }
-
                                 val canBreak = if (generatorMode) {
                                     MinionUtils.isStoneGenerator(location)
                                 } else {
@@ -208,23 +172,6 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                     locCopy.setZ(locCopy.getBlockZ().toDouble())
                     LocationUtils.getAllBlocksInRadius(locCopy, minion.getRange(), false)
                         .fastFor { location ->
-                            if (AxMinionsPlugin.integrations.kGeneratorsIntegration) {
-                                val gen = Main.getPlacedGenerators().getLoaded(location)
-                                if (gen != null) {
-                                    val possible = gen.isBlockPossibleToMine(location)
-
-                                    if (possible) {
-                                        minion.addToContainerOrDrop(
-                                            gen.lastGeneratedObject.customDrops?.item?.clone() ?: return@fastFor
-                                        )
-                                        gen.scheduleGeneratorRegeneration()
-                                        return@fastFor
-                                    } else {
-                                        return@fastFor
-                                    }
-                                }
-                            }
-
                             val canBreak = if (generatorMode) {
                                 MinionUtils.isStoneGenerator(location)
                             } else {
@@ -255,36 +202,6 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                     locCopy.setY(locCopy.getBlockY().toDouble())
                     locCopy.setZ(locCopy.getBlockZ().toDouble())
                     LocationUtils.getAllBlocksFacing(locCopy, minion.getRange(), it).fastFor { location ->
-                        if (AxMinionsPlugin.integrations.kGeneratorsIntegration) {
-                            if (Config.DEBUG()) {
-                                println("KGenerators integration!")
-                            }
-                            val gen = Main.getPlacedGenerators().getLoaded(location)
-                            if (gen != null) {
-                                if (Config.DEBUG()) {
-                                    println("Gen not null")
-                                }
-                                val possible = gen.isBlockPossibleToMine(location)
-
-                                if (possible) {
-                                    if (Config.DEBUG()) {
-                                        println("Not possible")
-                                    }
-                                    minion.addToContainerOrDrop(
-                                        gen.lastGeneratedObject.customDrops?.item?.clone() ?: return@fastFor
-                                    )
-                                    gen.scheduleGeneratorRegeneration()
-                                    return@fastFor
-                                } else {
-                                    return@fastFor
-                                }
-                            }
-                        } else {
-                            if (Config.DEBUG()) {
-                                println("Else")
-                            }
-                        }
-
                         val canBreak = if (generatorMode) {
                             MinionUtils.isStoneGenerator(location)
                         } else {
@@ -315,22 +232,6 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                 locCopy.setZ(locCopy.getBlockZ().toDouble())
                 LocationUtils.getAllBlocksFacing(locCopy, minion.getRange(), minion.getDirection().facing)
                     .fastFor { location ->
-                        if (AxMinionsPlugin.integrations.kGeneratorsIntegration) {
-                            val gen = Main.getPlacedGenerators().getLoaded(location)
-                            if (gen != null) {
-                                val possible = gen.isBlockPossibleToMine(location)
-
-                                if (possible) {
-                                    minion.addToContainerOrDrop(
-                                        gen.lastGeneratedObject.customDrops?.item?.clone() ?: return@fastFor
-                                    )
-                                    gen.scheduleGeneratorRegeneration()
-                                    return@fastFor
-                                } else {
-                                    return@fastFor
-                                }
-                            }
-                        }
                         if (AxMinionsPlugin.integrations.itemsAdderIntegration) {
                             val block = CustomBlock.byAlreadyPlaced(location.block)
                             if (block !== null) {

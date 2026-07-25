@@ -19,7 +19,6 @@ softdepend:
   - SuperiorSkyBlock2
   - WorldGuard
   - PlotSquared
-  - KGenerators
   - Towny
   - ItemsAdder
   - zShop
