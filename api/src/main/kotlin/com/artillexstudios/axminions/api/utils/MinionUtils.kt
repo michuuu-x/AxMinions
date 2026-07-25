@@ -68,6 +68,7 @@ object MinionUtils {
     fun getTree(startBlock: Block): Set<Block> {
         val max: Int = Config.MAX_BREAKS_PER_TICK()
         var count: Int = 0
+        var hasCanopy = false
         val queue: Queue<Block> = LinkedList()
         val visited = mutableSetOf<Block>()
         val tree = mutableSetOf<Block>()
@@ -80,13 +81,17 @@ object MinionUtils {
             val type = block.type.toString()
             if (type.endsWith("_WOOD") || type.endsWith("_LOG") || type.endsWith("_STEM")) {
                 if (count >= max) {
-                    return tree
+                    return if (hasCanopy) tree else emptySet()
                 }
                 count++
                 tree.add(block)
 
                 FACES.fastFor {
                     val relative = block.getRelative(it)
+                    if (!hasCanopy && isCanopy(relative.type)) {
+                        hasCanopy = true
+                    }
+
                     if (!visited.contains(relative)) {
                         queue.add(relative)
                         visited.add(relative)
@@ -94,7 +99,11 @@ object MinionUtils {
                 }
             }
         }
+        return if (hasCanopy) tree else emptySet()
+    }
 
-        return tree
+    private fun isCanopy(material: Material): Boolean {
+        val name = material.toString()
+        return name.endsWith("_LEAVES") || name == "NETHER_WART_BLOCK" || name == "WARPED_WART_BLOCK" || name == "SHROOMLIGHT"
     }
 }
