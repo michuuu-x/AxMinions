@@ -30,6 +30,7 @@ import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.api.utils.NumberFormatUtils
 import com.artillexstudios.axminions.api.utils.TimeUtils
 import com.artillexstudios.axminions.api.utils.fastFor
+import com.artillexstudios.axminions.api.hologram.HologramStyler
 import com.artillexstudios.axminions.api.warnings.Warning
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.listeners.LinkingListener
@@ -96,6 +97,7 @@ class Minion(
     private var armTick = 2.0
     private var warning: Warning? = null
     private var hologram: Hologram? = null
+    private var nameHologram: Hologram? = null
     private val extraData = hashMapOf<String, String>()
     private var linkedInventory: Inventory? = null
     internal val openInventories = mutableListOf<Inventory>()
@@ -166,16 +168,6 @@ class Minion(
             }
         }
 
-        meta.name(
-            StringUtils.format(
-                type.getConfig().get("entity.name"),
-                Placeholder.unparsed("owner", owner.name ?: "???"),
-                Placeholder.unparsed("level", level.toString()),
-                Placeholder.parsed("level_color", Messages.LEVEL_COLOR(level))
-            )
-        )
-        meta.customNameVisible(true)
-
         if (Config.DEBUG()) {
             debugHologram = Hologram(location.clone().add(0.0, 2.0, 0.0))
             val page = debugHologram?.createPage(HologramTypes.TEXT)
@@ -193,6 +185,20 @@ class Minion(
         setDirection(direction, false)
         updateArmour()
         entity.spawn()
+
+        val nameSection = Config.HOLOGRAM_NAME_SECTION()
+        nameHologram = Hologram(HologramStyler.offset(location, nameSection))
+        val namePage = nameHologram!!.createPage(HologramTypes.TEXT)
+        namePage.setEntityMetaHandler { meta ->
+            HologramStyler.apply(meta as TextDisplayMeta, nameSection)
+        }
+        namePage.content = StringUtils.formatToString(
+            type.getConfig().get("entity.name"),
+            Placeholder.unparsed("owner", owner.name ?: "???"),
+            Placeholder.unparsed("level", level.toString()),
+            Placeholder.parsed("level_color", Messages.LEVEL_COLOR(level))
+        )
+        namePage.spawn()
     }
 
     private fun breakMinion(event: PacketEntityInteractEvent) {
@@ -514,9 +520,9 @@ class Minion(
         updateArmour()
         updateInventories()
 
-        val meta = entity.meta()
-        meta.name(
-            StringUtils.format(
+        nameHologram?.setContent(
+            0,
+            StringUtils.formatToString(
                 type.getConfig().get("entity.name"),
                 Placeholder.unparsed("owner", owner.name ?: "???"),
                 Placeholder.unparsed("level", level.toString()),
@@ -604,6 +610,7 @@ class Minion(
 
     override fun remove() {
         Warnings.remove(this, warning ?: Warnings.NO_CONTAINER)
+        nameHologram?.remove()
         Minions.remove(this)
         entity.remove()
 

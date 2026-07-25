@@ -146,9 +146,41 @@ gui:
       slot: 15
     statistics:
       slot: 16
+
+# Hologram appearance settings.
+# "name" controls the hologram showing the minion's name above its head.
+# "warnings" controls the hologram shown when a minion has an issue (no fuel, container full, etc.)
+holograms:
+  name:
+    # "transparent", "default" (vanilla dark box) or a hex ARGB color like "#80000000"
+    background: "transparent"
+    shadow: true
+    see-through: false
+    scale: 1.0
+    offset:
+      x: 0.0
+      y: 1.3
+      z: 0.0
+    billboard-type: "CENTER" # FIXED, CENTER, HORIZONTAL, VERTICAL
+    alignment: "CENTER" # LEFT, CENTER, RIGHT
+    # Multiplier over vanilla's default entity view range, not a literal block distance
+    visibility-distance: 10
+  warnings:
+    background: "transparent"
+    shadow: true
+    see-through: false
+    scale: 1.0
+    offset:
+      x: 0.0
+      y: 1.7
+      z: 0.0
+    billboard-type: "CENTER" # FIXED, CENTER, HORIZONTAL, VERTICAL
+    alignment: "CENTER" # LEFT, CENTER, RIGHT
+    visibility-distance: 10
+
 # Only change this, if you are asked to! This will make your performance worse, and will spam messages in your console!
 # Requires restart!
 debug: false
 
 # Do not change!
-config-version: 11
+config-version: 12
