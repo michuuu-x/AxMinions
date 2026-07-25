@@ -21,6 +21,7 @@ import org.bukkit.Material
 import org.bukkit.block.BlockFace
 import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.inventory.FurnaceRecipe
+import org.bukkit.inventory.ItemStack
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -42,6 +43,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
     }
 
     private var generatorMode = false
+    private var smeltOre = false
     private val whitelist = arrayListOf<Material>()
 
     override fun shouldRun(minion: Minion): Boolean {
@@ -56,9 +58,21 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
         minionImpl.setNextAction((getLong("speed", minion.getLevel()) * efficiency).roundToInt())
 
         generatorMode = getConfig().getString("break", "generator").equals("generator", true)
+        smeltOre = getConfig().getBoolean("smelt", false)
         whitelist.clear()
         getConfig().getStringList("whitelist").fastFor {
             whitelist.add(Material.matchMaterial(it.uppercase(Locale.ENGLISH)) ?: return@fastFor)
+        }
+    }
+
+    private fun smeltDrops(drops: Collection<ItemStack>): Collection<ItemStack> {
+        if (!smeltOre || smeltingRecipes.isEmpty()) return drops
+
+        return drops.map { item ->
+            val recipe = smeltingRecipes.firstOrNull { it.inputChoice.test(item) } ?: return@map item
+            val result = recipe.result.clone()
+            result.amount = item.amount
+            result
         }
     }
 
@@ -124,7 +138,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
 
                     if (canBreak) {
                         val block = location.block
-                        val drops = block.getDrops(minion.getTool())
+                        val drops = smeltDrops(block.getDrops(minion.getTool()))
                         xp += NMSHandler.get().getExp(block, minion.getTool() ?: return)
                         drops.forEach {
                             amount += it.amount
@@ -173,7 +187,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                                 if (canBreak) {
                                     Scheduler.get().run { task ->
                                         val block = location.block
-                                        val drops = block.getDrops(minion.getTool())
+                                        val drops = smeltDrops(block.getDrops(minion.getTool()))
                                         xp += NMSHandler.get().getExp(block, minion.getTool() ?: return@run)
                                         drops.forEach {
                                             amount += it.amount
@@ -219,7 +233,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
 
                             if (canBreak) {
                                 val block = location.block
-                                val drops = block.getDrops(minion.getTool())
+                                val drops = smeltDrops(block.getDrops(minion.getTool()))
                                 xp += NMSHandler.get().getExp(block, minion.getTool() ?: return)
                                 drops.forEach {
                                     amount += it.amount
@@ -279,7 +293,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
 
                         if (canBreak) {
                             val block = location.block
-                            val drops = block.getDrops(minion.getTool())
+                            val drops = smeltDrops(block.getDrops(minion.getTool()))
                             xp += NMSHandler.get().getExp(block, minion.getTool() ?: return)
                             drops.forEach { item ->
                                 amount += item.amount
@@ -338,7 +352,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
 
                         if (canBreak) {
                             val block = location.block
-                            val drops = block.getDrops(minion.getTool())
+                            val drops = smeltDrops(block.getDrops(minion.getTool()))
                             xp += NMSHandler.get().getExp(block, minion.getTool() ?: return)
                             drops.forEach {
                                 amount += it.amount
