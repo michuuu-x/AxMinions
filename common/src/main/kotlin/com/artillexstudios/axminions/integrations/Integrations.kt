@@ -21,7 +21,7 @@ import com.artillexstudios.axminions.integrations.protection.IridiumSkyBlockInte
 import com.artillexstudios.axminions.integrations.protection.KingdomsXIntegration
 import com.artillexstudios.axminions.integrations.protection.LandsIntegration
 import com.artillexstudios.axminions.integrations.protection.SuperiorSkyBlock2Integration
-import com.artillexstudios.axminions.integrations.protection.TownyIntegration
+//import com.artillexstudios.axminions.integrations.protection.TownyIntegration
 import com.artillexstudios.axminions.integrations.protection.WorldGuardIntegration
 import com.artillexstudios.axminions.integrations.stacker.DefaultStackerIntegration
 import com.artillexstudios.axminions.integrations.stacker.RoseStackerIntegration
@@ -209,11 +209,11 @@ class Integrations : Integrations {
                 .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ItemsAdder!"))
         }
 
-        if (Bukkit.getPluginManager().getPlugin("Towny") != null) {
-            register(TownyIntegration())
-            Bukkit.getConsoleSender()
-                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into Towny!"))
-        }
+//        if (Bukkit.getPluginManager().getPlugin("Towny") != null) {
+//            register(TownyIntegration())
+//            Bukkit.getConsoleSender()
+//                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into Towny!"))
+//        }
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             PlaceholderAPIIntegration().register()

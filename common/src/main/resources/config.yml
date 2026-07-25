@@ -68,7 +68,7 @@ hooks:
   # Supported economy providers: Vault, PlayerPoints, custom
   economy: "Vault"
   # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, CMI, custom
-  prices: "ShopGUIPlus"
+  prices: "Essentials"
 
 charge:
   enabled: false

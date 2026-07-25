@@ -22,6 +22,11 @@ interface NMSHandler {
 
     fun generateRandomFishingLoot(minion: Minion, waterLocation: Location): List<ItemStack>
 
+    // null means the version does not implement this yet; callers must leave vanilla drops untouched in that case
+    fun generateEntityLoot(minion: Minion, entity: Entity): List<ItemStack>? {
+        return null
+    }
+
     fun isAnimal(entity: Entity): Boolean
 
     fun getAnimalUUID(): UUID

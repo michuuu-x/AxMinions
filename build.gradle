@@ -132,9 +132,9 @@ allprojects {
             url = uri("https://repo.artillex-studios.com/releases")
         }
 
-        maven {
-            url = uri("https://repo.glaremasters.me/repository/towny")
-        }
+//        maven {
+//            url = uri("https://repo.glaremasters.me/repository/towny/")
+//        }
 
         maven {
             url = uri("https://repo.extendedclip.com/content/repositories/placeholderapi/")

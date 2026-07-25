@@ -19,6 +19,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityDeathEvent
 
 class MinionDamageListener : Listener {
     private val random = Random()
@@ -77,6 +78,17 @@ class MinionDamageListener : Listener {
                 Bukkit.getPluginManager().callEvent(MinionKillEntityEvent(NMSHandler.get().getMinion() ?: return, entity))
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onEntityDeathEvent(event: EntityDeathEvent) {
+        val cause = event.entity.lastDamageCause as? EntityDamageByEntityEvent ?: return
+        if (cause.damager.uniqueId != NMSHandler.get().getAnimalUUID()) return
+        val minion = NMSHandler.get().getMinion() ?: return
+
+        val loot = NMSHandler.get().generateEntityLoot(minion, event.entity) ?: return
+        event.drops.clear()
+        event.drops.addAll(loot)
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
