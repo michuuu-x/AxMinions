@@ -75,7 +75,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedInventory() != null && minion.getLinkedInventory()?.firstEmpty() != -1) {
+        if (minion.getLinkedInventory() != null && !MinionUtils.isFull(minion.getLinkedInventory()!!)) {
             Warnings.remove(minion, Warnings.CONTAINER_FULL)
         }
 
@@ -99,7 +99,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
             return
         }
 
-        if (minion.getLinkedInventory()?.firstEmpty() == -1) {
+        if (minion.getLinkedInventory()?.let { MinionUtils.isFull(it) } == true) {
             Warnings.CONTAINER_FULL.display(minion)
             return
         }

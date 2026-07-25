@@ -158,7 +158,12 @@ allprojects {
 }
 
 
+jar {
+    enabled = false
+}
+
 shadowJar {
+    archiveClassifier.set("")
     relocate("com.artillexstudios.axapi", "com.artillexstudios.axminions.libs.axapi")
     relocate("org.h2", "com.artillexstudios.axminions.libs.h2")
     relocate("org.jetbrains.kotlin", "com.artillexstudios.axminions.libs.kotlin")

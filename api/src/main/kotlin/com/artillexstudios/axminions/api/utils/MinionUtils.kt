@@ -8,10 +8,20 @@ import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.data.Waterlogged
+import org.bukkit.inventory.Inventory
 
 object MinionUtils {
     private val FACES =
         arrayOf(BlockFace.DOWN, BlockFace.UP, BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)
+
+    @JvmStatic
+    fun isFull(inventory: Inventory): Boolean {
+        for (item in inventory.storageContents) {
+            if (item == null || item.amount < item.maxStackSize) return false
+        }
+
+        return true
+    }
 
     @JvmStatic
     fun getPlant(block: Block): ArrayList<Block> {
