@@ -39,5 +39,6 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.bstats:bstats-bukkit:3.0.2")
     compileOnly 'org.black_ixx:playerpoints:3.2.6'
+    compileOnly 'su.nightexpress.excellenteconomy:ExcellentEconomy:2.8.0'
     compileOnly 'me.clip:placeholderapi:2.11.5'
 }

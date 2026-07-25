@@ -41,6 +41,8 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun ECONOMY_HOOK() = AxMinionsAPI.INSTANCE.getConfig().get("hooks.economy", "Vault")
         @JvmStatic
+        fun ECONOMY_CURRENCY() = AxMinionsAPI.INSTANCE.getConfig().get("hooks.economy-currency", "coins")
+        @JvmStatic
         fun PRICES_HOOK() = AxMinionsAPI.INSTANCE.getConfig().get("hooks.prices", "ShopGUIPlus")
         @JvmStatic
         fun CHARGE_ENABLED() = AxMinionsAPI.INSTANCE.getConfig().get("charge.enabled", false)

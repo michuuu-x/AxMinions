@@ -65,8 +65,10 @@ database:
 hooks:
   # Supported stacker plugins: WildStacker, RoseStacker, none
   stacker: "none"
-  # Supported economy providers: Vault, PlayerPoints, custom
+  # Supported economy providers: Vault, PlayerPoints, ExcellentEconomy, custom
   economy: "Vault"
+  # Currency ID to use, only applies to the ExcellentEconomy provider ( default: coins )
+  economy-currency: "coins"
   # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, CMI, custom
   prices: "Essentials"
 

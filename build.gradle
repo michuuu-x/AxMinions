@@ -132,6 +132,10 @@ allprojects {
             url = uri("https://repo.artillex-studios.com/releases")
         }
 
+        maven {
+            url = uri("https://repo.nightexpressdev.com/releases")
+        }
+
 //        maven {
 //            url = uri("https://repo.glaremasters.me/repository/towny/")
 //        }

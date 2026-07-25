@@ -7,6 +7,7 @@ import com.artillexstudios.axminions.api.exception.InvalidIntegrationException
 import com.artillexstudios.axminions.api.integrations.Integration
 import com.artillexstudios.axminions.api.integrations.Integrations
 import com.artillexstudios.axminions.api.integrations.types.*
+import com.artillexstudios.axminions.integrations.economy.ExcellentEconomyIntegration
 import com.artillexstudios.axminions.integrations.economy.PlayerPointsIntegration
 import com.artillexstudios.axminions.integrations.economy.VaultIntegration
 import com.artillexstudios.axminions.integrations.placeholder.PlaceholderAPIIntegration
@@ -142,6 +143,14 @@ class Integrations : Integrations {
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into PlayerPoints!"))
                 }
             }
+
+            "excellenteconomy" -> {
+                if (isPluginLoaded("ExcellentEconomy")) {
+                    register(ExcellentEconomyIntegration())
+                    Bukkit.getConsoleSender()
+                        .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ExcellentEconomy!"))
+                }
+            }
         }
 
         protectionIntegrations.clear()
@@ -253,8 +262,6 @@ class Integrations : Integrations {
 
     private fun isPluginLoaded(pluginName: String): Boolean {
         if (Bukkit.getPluginManager().getPlugin(pluginName) != null) {
-            Bukkit.getConsoleSender()
-                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into $pluginName!"))
             return true
         } else {
             Bukkit.getConsoleSender()
