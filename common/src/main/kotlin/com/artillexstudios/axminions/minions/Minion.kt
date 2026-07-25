@@ -27,6 +27,7 @@ import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.Keys
+import com.artillexstudios.axminions.api.utils.NumberFormatUtils
 import com.artillexstudios.axminions.api.utils.TimeUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warning
@@ -48,7 +49,6 @@ import org.bukkit.inventory.meta.Damageable
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.EulerAngle
-import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -76,7 +76,6 @@ class Minion(
             EquipmentSlot.CHEST_PLATE,
             EquipmentSlot.HELMET
         )
-        private val numberFormat = NumberFormat.getCompactNumberInstance(Locale.ENGLISH, NumberFormat.Style.SHORT)
         private val notDurable = arrayListOf<Material>()
 
         init {
@@ -322,10 +321,9 @@ class Minion(
                 )
                 val price = Placeholder.parsed(
                     "price",
-                    if (type.hasReachedMaxLevel(this)) Messages.UPGRADES_MAX_LEVEL_REACHED() else type.getDouble(
-                        "requirements.money",
-                        this.level + 1
-                    ).toString()
+                    if (type.hasReachedMaxLevel(this)) Messages.UPGRADES_MAX_LEVEL_REACHED() else NumberFormatUtils.format(
+                        type.getDouble("requirements.money", this.level + 1)
+                    )
                 )
                 val requiredActions =
                     Placeholder.parsed(
@@ -335,7 +333,7 @@ class Minion(
                             this.level + 1
                         ).toString()
                     )
-                val stored = Placeholder.parsed("storage", numberFormat.format(storage))
+                val stored = Placeholder.parsed("storage", NumberFormatUtils.format(storage))
                 val actions = Placeholder.parsed("actions", actions.toString())
                 val multiplier = Placeholder.parsed("multiplier", type.getDouble("multiplier", this.level).toString())
                 val nextMultiplier = Placeholder.parsed(

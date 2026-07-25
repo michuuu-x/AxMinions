@@ -57,6 +57,14 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun TIMER_FORMAT() = AxMinionsAPI.INSTANCE.getConfig().get("timer-format", 1)
         @JvmStatic
+        fun NUMBER_FORMATTING_MODE() = AxMinionsAPI.INSTANCE.getConfig().get("number-formatting.mode", 1)
+        @JvmStatic
+        fun NUMBER_FORMATTING_PATTERN() = AxMinionsAPI.INSTANCE.getConfig().get("number-formatting.formatted", "#,###.##")
+        @JvmStatic
+        fun NUMBER_FORMATTING_SHORT_LOCALE() = AxMinionsAPI.INSTANCE.getConfig().get("number-formatting.short", "en_US")
+        @JvmStatic
+        fun NUMBER_FORMATTING_ROUNDING() = AxMinionsAPI.INSTANCE.getConfig().get("number-formatting.rounding", "HALF_EVEN")
+        @JvmStatic
         fun GUI_SIZE() = AxMinionsAPI.INSTANCE.getConfig().get<Int>("gui.size")
         @JvmStatic
         fun PULL_FROM_CHEST() = AxMinionsAPI.INSTANCE.getConfig().get("pull-tools-from-chest", false)

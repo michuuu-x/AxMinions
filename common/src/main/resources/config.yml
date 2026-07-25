@@ -87,6 +87,21 @@ charge:
 # 3 - text format, for example 01h 25m 35s
 timer-format: 1
 
+# Controls how economy amounts (stored coins, upgrade prices) are displayed
+number-formatting:
+  # modes:
+  # 0 - formatted (np. 1,000.42)
+  # 1 - short (np. 1K)
+  # 2 - raw (np. 1000.4242)
+  mode: 1
+  # Pattern for mode 0
+  # A tutorial can be found here: https://docs.oracle.com/javase/tutorial/i18n/format/decimalFormat.html
+  formatted: '#,###.##'
+  # Language for mode 1 (e.g. en_US)
+  short: en_US
+  # Allowed modes: UP, DOWN, CEILING, FLOOR, HALF_UP, HALF_DOWN, HALF_EVEN, UNNECESSARY
+  rounding: HALF_EVEN
+
 gui:
   size: 27
   items:
@@ -134,4 +149,4 @@ gui:
 debug: false
 
 # Do not change!
-config-version: 10
+config-version: 11
