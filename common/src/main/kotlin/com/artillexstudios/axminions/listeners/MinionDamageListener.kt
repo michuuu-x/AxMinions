@@ -1,18 +1,13 @@
 package com.artillexstudios.axminions.listeners
 
-import com.artillexstudios.axapi.scheduler.Scheduler
 import com.artillexstudios.axminions.AxMinionsPlugin
-import com.artillexstudios.axminions.api.AxMinionsAPI
 import com.artillexstudios.axminions.api.events.MinionKillEntityEvent
-import com.artillexstudios.axminions.api.utils.fastFor
-import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.nms.NMSHandler
 import dev.rosewood.rosestacker.api.RoseStackerAPI
 import com.artillexstudios.axminions.integrations.stacker.RoseStackerIntegration
 import org.bukkit.Bukkit
 import java.util.concurrent.ThreadLocalRandom
 import java.util.Random
-import org.bukkit.entity.Item
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -47,27 +42,6 @@ class MinionDamageListener : Listener {
                 event.minion.getType().getLong("storage", event.minion.getLevel()).toDouble()
         )
         event.minion.setStorage(coerced)
-
-        Scheduler.get().runLaterAt(event.target.location, { task ->
-            event.target.location.world!!.getNearbyEntities(event.target.location, 4.0, 4.0, 4.0)
-                .filterIsInstance<Item>().fastFor { item ->
-                if (event.minion.getLinkedInventory()?.firstEmpty() == -1) {
-                    Warnings.CONTAINER_FULL.display(event.minion)
-                    return@runLaterAt
-                }
-
-                val amount = AxMinionsPlugin.integrations.getStackerIntegration().getStackSize(item)
-                val stack = item.itemStack
-                stack.amount = amount.toInt()
-
-                val map = event.minion.addWithRemaining(stack) ?: return@fastFor
-                if (map.isEmpty() || stack.amount <= 0) {
-                    item.remove()
-                } else {
-                    AxMinionsAPI.INSTANCE.getIntegrations().getStackerIntegration().setStackSize(item, stack.amount)
-                }
-            }
-        }, 2)
     }
 
     @EventHandler
@@ -88,7 +62,7 @@ class MinionDamageListener : Listener {
 
         val loot = NMSHandler.get().generateEntityLoot(minion, event.entity) ?: return
         event.drops.clear()
-        event.drops.addAll(loot)
+        minion.addToContainerOrDrop(loot)
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
