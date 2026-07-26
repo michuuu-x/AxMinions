@@ -33,6 +33,8 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun ISLAND_LIMIT() = AxMinionsAPI.INSTANCE.getConfig().get("island-limit", 0)
         @JvmStatic
+        fun RETURN_MINIONS_ON_ISLAND_LEAVE() = AxMinionsAPI.INSTANCE.getConfig().get("return-minions-on-island-leave", true)
+        @JvmStatic
         fun USE_DURABILITY() = AxMinionsAPI.INSTANCE.getConfig().get("use-durability", true)
         @JvmStatic
         fun DATABASE_TYPE() = AxMinionsAPI.INSTANCE.getConfig().get("database.type", "H2")

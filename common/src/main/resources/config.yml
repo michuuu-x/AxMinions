@@ -36,6 +36,12 @@ can-break-tools: true
 # The limit to use for islands
 island-limit: 10
 
+# If true, when a player leaves an island's membership, gets kicked from it, or the island gets disbanded,
+# their minions (and the tools inside them) on that island are returned to their inventory (or dropped on
+# the ground at the minion's location if their inventory is full or they're offline).
+# If false, the minions (and their tools) are simply dropped on the ground at the minion's location instead,
+return-minions-on-island-leave: true
+
 # If the minion should be able to take durability from it's held item
 use-durability: true
 
