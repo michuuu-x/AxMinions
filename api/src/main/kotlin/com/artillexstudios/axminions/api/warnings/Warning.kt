@@ -28,6 +28,7 @@ abstract class Warning(private val name: String) {
             page.setEntityMetaHandler { meta ->
                 HologramStyler.apply(meta as TextDisplayMeta, section)
             }
+            HologramStyler.applyViewDistance(page, section)
             page.content = StringUtils.formatToString(this.getContent());
             page.spawn();
             minion.setWarning(this)

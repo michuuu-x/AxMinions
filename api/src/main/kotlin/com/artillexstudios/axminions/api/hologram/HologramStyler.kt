@@ -1,12 +1,63 @@
 package com.artillexstudios.axminions.api.hologram
 
+import com.artillexstudios.axapi.hologram.page.HologramPage
+import com.artillexstudios.axapi.hologram.page.TextDisplayHologramPage
 import com.artillexstudios.axapi.libs.boostedyaml.block.implementation.Section
+import com.artillexstudios.axapi.packetentity.PacketEntity
 import com.artillexstudios.axapi.packetentity.meta.entity.DisplayMeta
 import com.artillexstudios.axapi.packetentity.meta.entity.TextDisplayMeta
 import com.artillexstudios.axapi.utils.Vector3f
+import org.bukkit.Bukkit
 import org.bukkit.Location
+import org.bukkit.entity.Player
 
 object HologramStyler {
+
+    private val textDisplayField = runCatching {
+        TextDisplayHologramPage::class.java.getDeclaredField("textDisplay").apply { isAccessible = true }
+    }.getOrNull()
+
+    private var warnedOnce = false
+
+    private fun getPacketEntity(page: HologramPage<*, *>): PacketEntity? {
+        val field = textDisplayField
+        if (field == null || page !is TextDisplayHologramPage) {
+            warnReflectionFailure("textDisplay field or page type unavailable (page=${page::class.java.name})")
+            return null
+        }
+
+        val entity = runCatching { field.get(page) as? PacketEntity }.getOrElse {
+            warnReflectionFailure("exception reading field: $it")
+            null
+        }
+        if (entity == null) {
+            warnReflectionFailure("field value was null or not a PacketEntity")
+        }
+        return entity
+    }
+
+    fun applyViewDistance(page: HologramPage<*, *>, section: Section) {
+        val distance = (section.getDouble("visibility-distance", 10.0) ?: 10.0).toInt()
+        val entity = getPacketEntity(page) ?: return
+        entity.viewDistance(distance)
+    }
+    
+    fun showTo(page: HologramPage<*, *>, player: Player) {
+        getPacketEntity(page)?.addPairing(player)
+    }
+
+    fun hideTo(page: HologramPage<*, *>, player: Player) {
+        getPacketEntity(page)?.removePairing(player)
+    }
+
+    private fun warnReflectionFailure(reason: String) {
+        if (warnedOnce) return
+        warnedOnce = true
+        Bukkit.getLogger().warning(
+            "[AxMinions] Could not apply hologram visibility-distance via reflection: $reason. " +
+                "The 'visibility-distance' config option will have no effect until this is fixed (likely an axapi version mismatch)."
+        )
+    }
 
     fun apply(meta: TextDisplayMeta, section: Section) {
         when (val background = section.getString("background", "transparent")) {

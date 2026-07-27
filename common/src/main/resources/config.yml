@@ -169,7 +169,7 @@ holograms:
       z: 0.0
     billboard-type: "CENTER" # FIXED, CENTER, HORIZONTAL, VERTICAL
     alignment: "CENTER" # LEFT, CENTER, RIGHT
-    # Multiplier over vanilla's default entity view range, not a literal block distance
+    # The distance, in blocks, from which players can see this hologram
     visibility-distance: 10
   warnings:
     background: "transparent"
@@ -182,6 +182,7 @@ holograms:
       z: 0.0
     billboard-type: "CENTER" # FIXED, CENTER, HORIZONTAL, VERTICAL
     alignment: "CENTER" # LEFT, CENTER, RIGHT
+    # The distance, in blocks, from which players can see this hologram
     visibility-distance: 10
 
 # Only change this, if you are asked to! This will make your performance worse, and will spam messages in your console!

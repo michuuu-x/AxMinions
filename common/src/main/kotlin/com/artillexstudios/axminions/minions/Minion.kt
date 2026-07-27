@@ -98,6 +98,8 @@ class Minion(
     private var warning: Warning? = null
     private var hologram: Hologram? = null
     private var nameHologram: Hologram? = null
+    private val nameHologramViewers = HashSet<UUID>()
+    private val warningHologramViewers = HashSet<UUID>()
     private val extraData = hashMapOf<String, String>()
     private var linkedInventory: Inventory? = null
     internal val openInventories = mutableListOf<Inventory>()
@@ -192,6 +194,7 @@ class Minion(
         namePage.setEntityMetaHandler { meta ->
             HologramStyler.apply(meta as TextDisplayMeta, nameSection)
         }
+        HologramStyler.applyViewDistance(namePage, nameSection)
         namePage.content = StringUtils.formatToString(
             type.getConfig().get("entity.name"),
             Placeholder.unparsed("owner", owner.name ?: "???"),
@@ -243,6 +246,10 @@ class Minion(
             debugHologram!!.setContent(0, "Ticking: $ticking")
         }
 
+        if (MinionTicker.getTick() % 20L == 0L) {
+            updateHologramVisibility()
+        }
+
         if (Config.CHARGE_ENABLED() && getCharge() < System.currentTimeMillis()) {
             Warnings.NO_CHARGE.display(this)
             return
@@ -254,6 +261,29 @@ class Minion(
             type.tick(this)
         }
         animate()
+    }
+
+    private fun updateHologramVisibility() {
+        val world = location.world ?: return
+        val nameDistance = Config.HOLOGRAM_NAME_SECTION().getDouble("visibility-distance", 10.0) ?: 10.0
+        val warningsDistance = Config.HOLOGRAM_WARNINGS_SECTION().getDouble("visibility-distance", 10.0) ?: 10.0
+        Bukkit.getOnlinePlayers().forEach { player ->
+            if (player.world != world) return@forEach
+            val distance = player.location.distance(location)
+            nameHologram?.page(0)?.let { updateViewer(it, player, distance <= nameDistance, nameHologramViewers) }
+            hologram?.page(0)?.let { updateViewer(it, player, distance <= warningsDistance, warningHologramViewers) }
+        }
+    }
+
+    private fun updateViewer(page: HologramPage<*, *>, player: Player, shouldSee: Boolean, viewers: MutableSet<UUID>) {
+        val currentlySeeing = viewers.contains(player.uniqueId)
+        if (shouldSee && !currentlySeeing) {
+            HologramStyler.showTo(page, player)
+            viewers.add(player.uniqueId)
+        } else if (!shouldSee && currentlySeeing) {
+            HologramStyler.hideTo(page, player)
+            viewers.remove(player.uniqueId)
+        }
     }
 
     override fun getLocation(): Location {
