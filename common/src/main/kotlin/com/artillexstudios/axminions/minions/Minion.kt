@@ -136,9 +136,16 @@ class Minion(
                 return@onInteract
             }
 
+            // Left-click no longer does anything; pickup is Shift + Right Click
+            if (event.isAttack) {
+                return@onInteract
+            }
+
+            val pickup = event.player.isSneaking
+
             // We want to do this, so we don't accidentally cause dupes...
             // Atomic variable; we don't want the scheduler to mess up the state
-            if (event.isAttack) {
+            if (pickup) {
                 broken.set(true)
             }
 
@@ -148,7 +155,7 @@ class Minion(
                     event.packetEntity.location()
                 )
 
-                if (event.isAttack) {
+                if (pickup) {
                     if (event.player.inventory.firstEmpty() == -1) {
                         broken.set(false)
                     } else {

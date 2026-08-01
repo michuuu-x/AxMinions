@@ -14,8 +14,8 @@ place-permissions: false
 # This setting can be overwritten by setting the 'axminions.limit.<amount>' permission!
 default-minion-limit: 5
 
-# If true, only the owner of this minion can break it
-# If false, everyone, who can break blocks at said location can break this minion
+# If true, only the owner of this minion can pick it up (Shift + Right Click)
+# If false, everyone, who can break blocks at said location can pick up this minion
 # You should enable this, if you aren't using a supported protection plugin!
 only-owner-break: true
 
