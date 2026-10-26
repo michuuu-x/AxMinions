@@ -11,6 +11,7 @@ import com.artillexstudios.axminions.integrations.economy.ExcellentEconomyIntegr
 import com.artillexstudios.axminions.integrations.economy.PlayerPointsIntegration
 import com.artillexstudios.axminions.integrations.economy.VaultIntegration
 import com.artillexstudios.axminions.integrations.placeholder.PlaceholderAPIIntegration
+import com.artillexstudios.axminions.integrations.prices.BuiltinPricesIntegration
 import com.artillexstudios.axminions.integrations.prices.CMIIntegration
 import com.artillexstudios.axminions.integrations.prices.EconomyShopGUIIntegration
 import com.artillexstudios.axminions.integrations.prices.EssentialsIntegration
@@ -116,6 +117,12 @@ class Integrations : Integrations {
                     Bukkit.getConsoleSender()
                         .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into EconomyShopGUI!"))
                 }
+            }
+
+            "builtin" -> {
+                register(BuiltinPricesIntegration())
+                Bukkit.getConsoleSender()
+                    .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Using the builtin prices from prices.yml!"))
             }
         }
 

@@ -88,6 +88,12 @@ class AxMinionsPlugin : AxPlugin() {
 
         AxMinionsPlugin.config = Config(File(dataFolder, "config.yml"), getResource("config.yml")!!)
         messages = Messages(File(dataFolder, "messages.yml"), getResource("messages.yml")!!)
+
+        // Only the builtin prices read it, but it is created with the other files so it can be edited before switching
+        if (!File(dataFolder, "prices.yml").exists()) {
+            saveResource("prices.yml", false)
+        }
+
         integrations = Integrations()
         integrations.reload()
 

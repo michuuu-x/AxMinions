@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.artillexstudios.axminions'
-version = '1.0.23-b1'
+version = '1.0.23-b2'
 
 repositories {
     mavenCentral()
@@ -133,10 +133,6 @@ allprojects {
         maven {
             url = uri("https://repo.nightexpressdev.com/releases")
         }
-
-//        maven {
-//            url = uri("https://repo.glaremasters.me/repository/towny/")
-//        }
 
         maven {
             url = uri("https://repo.extendedclip.com/content/repositories/placeholderapi/")

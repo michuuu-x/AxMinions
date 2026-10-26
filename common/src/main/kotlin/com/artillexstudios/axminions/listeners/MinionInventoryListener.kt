@@ -153,15 +153,18 @@ class MinionInventoryListener : Listener {
             }
 
             "link" -> {
-                if (minion.getLinkedChest() != null) {
+                if (event.isRightClick) {
+                    if (minion.getLinkedChest() == null) return
+
                     minion.setLinkedChest(null)
                     player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_UNLINK()))
+                } else if (event.isLeftClick) {
+                    player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_START()))
+                    LinkingListener.linking[player] = minion
+                    player.closeInventory()
+                } else {
                     return
                 }
-
-                player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_START()))
-                LinkingListener.linking[player] = minion
-                player.closeInventory()
             }
 
             "upgrade" -> {

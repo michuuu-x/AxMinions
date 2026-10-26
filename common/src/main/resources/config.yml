@@ -90,8 +90,9 @@ hooks:
   economy: "Vault"
   # Currency ID to use, only applies to the ExcellentEconomy provider ( default: coins )
   economy-currency: "coins"
-  # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, CMI, custom
-  prices: "CMI"
+  # Supported prices providers: ShopGUIPlus, Essentials, EconomyShopGUI, CMI, builtin
+  # builtin uses the prices from the prices.yml file
+  prices: "builtin"
 
 charge:
   enabled: false
@@ -147,7 +148,8 @@ gui:
         - ""
         - " <gray>- <white>Status: <#FFCC00><linked>"
         - ""
-        - "<#FFCC00><b>(!)</b> Click here to link your minion to a container!"
+        - "<#FFCC00><b>(!)</b> Left-click: start container link"
+        - "<#FFCC00><b>(!)</b> Right-click: unlink container"
       slot: 11
     item:
       type: "air"
