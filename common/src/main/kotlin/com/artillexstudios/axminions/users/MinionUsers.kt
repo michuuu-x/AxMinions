@@ -19,25 +19,24 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.SkullMeta
 import java.io.File
 import java.io.InputStream
+import java.util.EnumSet
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * The players an owner trusts, and the menu opened by /minions users where they can be managed.
- * A trusted player can use every minion of the owner, see [Minion.hasFullAccess] for what is still left to the owner.
+ * The players an owner trusts, and the menus opened by /minions users where they can be managed.
+ * A trusted player can open the menu of every minion of the owner, what else they can do is up to the owner,
+ * see [TrustPermission]. [Minion.hasFullAccess] is what is always left to the owner (and to the ones with full access).
  */
 class MinionUsers(file: File, stream: InputStream) {
-    class Holder(val owner: UUID) : InventoryHolder {
-        var page = 0
-
-        // The trusted player shown in a slot, filled by the last render
-        internal val shown = HashMap<Int, UUID>()
+    abstract class MenuHolder(val owner: UUID) : InventoryHolder {
         private lateinit var inventory: Inventory
 
         internal fun setInventory(inventory: Inventory) {
@@ -49,6 +48,24 @@ class MinionUsers(file: File, stream: InputStream) {
         }
     }
 
+    /**
+     * The list of the trusted players.
+     */
+    class Holder(owner: UUID) : MenuHolder(owner) {
+        var page = 0
+
+        // The trusted player shown in a slot, filled by the last render
+        internal val shown = HashMap<Int, UUID>()
+    }
+
+    /**
+     * The permissions of one trusted player, [page] is the page of the list it was opened from.
+     */
+    class PermissionsHolder(owner: UUID, val user: UUID, val page: Int) : MenuHolder(owner) {
+        // The permission shown in a slot, filled by the last render
+        internal val shown = HashMap<Int, TrustPermission>()
+    }
+
     private val config = Config(
         file,
         stream,
@@ -58,8 +75,9 @@ class MinionUsers(file: File, stream: InputStream) {
         UpdaterSettings.builder().setVersioning(BasicVersioning("config-version")).build()
     )
 
-    // Read by the minions on every click, so this has to stay in memory
-    private val trusted = ConcurrentHashMap<UUID, MutableSet<UUID>>()
+    // Read by the minions on every click, so this has to stay in memory.
+    // The permissions of a player are never changed, the set gets replaced by a new one.
+    private val trusted = ConcurrentHashMap<UUID, ConcurrentHashMap<UUID, Set<TrustPermission>>>()
 
     // The players who are about to type the name of a new trusted player in the chat, with the time the prompt runs out
     private val prompts = ConcurrentHashMap<UUID, Long>()
@@ -70,11 +88,22 @@ class MinionUsers(file: File, stream: InputStream) {
     private var backSlot = 18
     private var nextSlot = 26
 
+    private var permissionsSize = 36
+    private var permissionsBackSlot = 27
+
+    // What a new trusted player is allowed to do
+    private var defaults: Set<TrustPermission> = emptySet()
+
     init {
         load()
 
         for ((owner, users) in AxMinionsPlugin.dataHandler.loadTrustedUsers()) {
-            trusted[owner] = ConcurrentHashMap.newKeySet<UUID>().also { it.addAll(users) }
+            val map = ConcurrentHashMap<UUID, Set<TrustPermission>>()
+            for ((user, saved) in users) {
+                map[user] = TrustPermission.parse(saved) ?: defaults
+            }
+
+            trusted[owner] = map
         }
     }
 
@@ -88,6 +117,22 @@ class MinionUsers(file: File, stream: InputStream) {
         addSlot = config.getInt("add.slot", 4)
         backSlot = config.getInt("back.slot", 18)
         nextSlot = config.getInt("next.slot", 26)
+
+        permissionsSize = (config.getInt("permissions-menu.size", 36).coerceIn(18, 54) + 8) / 9 * 9
+        permissionsBackSlot = config.getInt("permissions-menu.back.slot", 27)
+
+        val permissions = EnumSet.noneOf(TrustPermission::class.java)
+        for (key in config.getStringList("default-permissions", listOf("upgrade", "charge", "toggle"))) {
+            val permission = TrustPermission.fromKey(key)
+            if (permission == null) {
+                AxMinionsPlugin.INSTANCE.logger.warning("users.yml: '$key' is not a valid permission in default-permissions, skipping it!")
+                continue
+            }
+
+            permissions.add(permission)
+        }
+
+        defaults = permissions
 
         val slots = linkedSetOf<Int>()
         for (entry in config.getStringList("user-slots", listOf("9-17"))) {
@@ -118,19 +163,34 @@ class MinionUsers(file: File, stream: InputStream) {
     }
 
     fun isTrusted(owner: UUID, player: UUID): Boolean {
-        return trusted[owner]?.contains(player) == true
+        return trusted[owner]?.containsKey(player) == true
+    }
+
+    /**
+     * Returns if the owner allowed the player to do this, a player who isn't trusted has no permissions at all.
+     */
+    fun hasPermission(owner: UUID, player: UUID, permission: TrustPermission): Boolean {
+        return trusted[owner]?.get(player)?.contains(permission) == true
     }
 
     fun getTrusted(owner: UUID): List<UUID> {
-        return trusted[owner]?.toList() ?: emptyList()
+        return trusted[owner]?.keys?.toList() ?: emptyList()
     }
 
     fun getTrustedCount(owner: UUID): Int {
         return trusted[owner]?.size ?: 0
     }
 
-    fun open(player: Player) {
+    /**
+     * The name shown for the permission, in the message sent to the player who isn't allowed to do it.
+     */
+    fun getLabel(permission: TrustPermission): String {
+        return config.getString("permissions-menu.permissions.${permission.key}.label", permission.key)
+    }
+
+    fun open(player: Player, page: Int = 0) {
         val holder = Holder(player.uniqueId)
+        holder.page = page
         val inventory = Bukkit.createInventory(holder, size, StringUtils.formatToString(config.getString("title", "Trusted Players")))
         holder.setInventory(inventory)
 
@@ -138,7 +198,14 @@ class MinionUsers(file: File, stream: InputStream) {
         player.openInventory(inventory)
     }
 
-    fun click(player: Player, holder: Holder, slot: Int) {
+    fun click(player: Player, holder: MenuHolder, slot: Int, click: ClickType) {
+        when (holder) {
+            is Holder -> clickList(player, holder, slot, click)
+            is PermissionsHolder -> clickPermissions(player, holder, slot)
+        }
+    }
+
+    private fun clickList(player: Player, holder: Holder, slot: Int, click: ClickType) {
         when (slot) {
             addSlot -> {
                 startPrompt(player)
@@ -157,11 +224,80 @@ class MinionUsers(file: File, stream: InputStream) {
             nextSlot -> holder.page++
             else -> {
                 val user = holder.shown[slot] ?: return
-                remove(holder.owner, user)
+
+                // Shift + Right Click removes the player, Left Click opens what they are allowed to do
+                if (click.isShiftClick && click.isRightClick) {
+                    remove(holder.owner, user)
+                } else if (click.isLeftClick) {
+                    openPermissions(player, holder.owner, user, holder.page)
+                    return
+                } else {
+                    return
+                }
             }
         }
 
         render(holder)
+    }
+
+    private fun clickPermissions(player: Player, holder: PermissionsHolder, slot: Int) {
+        if (slot == permissionsBackSlot) {
+            open(player, holder.page)
+            return
+        }
+
+        val permission = holder.shown[slot] ?: return
+
+        // The player was removed while the menu was open
+        if (!toggle(holder.owner, holder.user, permission)) {
+            open(player, holder.page)
+            return
+        }
+
+        renderPermissions(holder)
+    }
+
+    private fun openPermissions(player: Player, owner: UUID, user: UUID, page: Int) {
+        if (!isTrusted(owner, user)) return
+
+        val name = Bukkit.getOfflinePlayer(user).name ?: "???"
+        val holder = PermissionsHolder(owner, user, page)
+        val title = StringUtils.formatToString(
+            config.getString("permissions-menu.title", "<#5555FF>Permissions: <player>"),
+            Placeholder.unparsed("player", name)
+        )
+
+        val inventory = Bukkit.createInventory(holder, permissionsSize, title)
+        holder.setInventory(inventory)
+
+        renderPermissions(holder)
+        player.openInventory(inventory)
+    }
+
+    /**
+     * Switches the permission of the trusted player, returns false if the player isn't trusted (anymore).
+     */
+    private fun toggle(owner: UUID, user: UUID, permission: TrustPermission): Boolean {
+        val users = trusted[owner] ?: return false
+
+        var updated: Set<TrustPermission>? = null
+        users.computeIfPresent(user) { _, current ->
+            val next = EnumSet.noneOf(TrustPermission::class.java)
+            next.addAll(current)
+            if (!next.remove(permission)) {
+                next.add(permission)
+            }
+
+            updated = next
+            next
+        }
+
+        val permissions = updated ?: return false
+        AxMinionsPlugin.dataQueue.submit {
+            AxMinionsPlugin.dataHandler.setTrustedPermissions(owner, user, TrustPermission.serialize(permissions))
+        }
+
+        return true
     }
 
     private fun startPrompt(player: Player) {
@@ -222,13 +358,14 @@ class MinionUsers(file: File, stream: InputStream) {
             return
         }
 
-        if (!trusted.getOrPut(player.uniqueId) { ConcurrentHashMap.newKeySet() }.add(target.uniqueId)) {
+        val permissions = defaults
+        if (trusted.getOrPut(player.uniqueId) { ConcurrentHashMap() }.putIfAbsent(target.uniqueId, permissions) != null) {
             player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.USERS_ALREADY_TRUSTED(), resolver))
             return
         }
 
         AxMinionsPlugin.dataQueue.submit {
-            AxMinionsPlugin.dataHandler.addTrustedUser(player.uniqueId, target.uniqueId)
+            AxMinionsPlugin.dataHandler.addTrustedUser(player.uniqueId, target.uniqueId, TrustPermission.serialize(permissions))
         }
 
         player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.USERS_ADDED(), resolver))
@@ -236,7 +373,7 @@ class MinionUsers(file: File, stream: InputStream) {
 
     private fun remove(owner: UUID, user: UUID) {
         val users = trusted[owner] ?: return
-        if (!users.remove(user)) return
+        if (users.remove(user) == null) return
 
         AxMinionsPlugin.dataQueue.submit {
             AxMinionsPlugin.dataHandler.removeTrustedUser(owner, user)
@@ -296,7 +433,7 @@ class MinionUsers(file: File, stream: InputStream) {
             // The menu can be smaller than it was when it got opened, if the config got reloaded
             if (slot < inventory.size) {
                 holder.shown[slot] = uuid
-                inventory.setItem(slot, createHead(uuid, name))
+                inventory.setItem(slot, createHead(holder.owner, uuid, name, "user"))
             }
         }
 
@@ -312,13 +449,63 @@ class MinionUsers(file: File, stream: InputStream) {
         }
     }
 
+    /**
+     * Fills the permission menu with the head of the player and what they are allowed to do.
+     */
+    private fun renderPermissions(holder: PermissionsHolder) {
+        val granted = trusted[holder.owner]?.get(holder.user) ?: emptySet()
+        val name = Bukkit.getOfflinePlayer(holder.user).name ?: "???"
+
+        val inventory = holder.inventory
+        val filler = HeadTextures.item(config.getSection("filler")).get()
+        for (i in 0 until inventory.size) {
+            inventory.setItem(i, filler)
+        }
+
+        place(
+            inventory,
+            config.getInt("permissions-menu.head.slot", 4),
+            createHead(holder.owner, holder.user, name, "permissions-menu.head")
+        )
+        place(inventory, permissionsBackSlot, HeadTextures.item(config.getSection("permissions-menu.back.item")).clonedGet())
+
+        holder.shown.clear()
+        for (permission in TrustPermission.entries) {
+            val section = config.getSection("permissions-menu.permissions.${permission.key}") ?: continue
+            val item = section.getSection("item") ?: continue
+            val slot = section.getInt("slot", -1)
+            if (slot < 0 || slot >= inventory.size) continue
+
+            val enabled = permission in granted
+            val status = if (enabled) {
+                config.getString("permissions-menu.status.enabled", "<#33FF33>Enabled")
+            } else {
+                config.getString("permissions-menu.status.disabled", "<#FF3333>Disabled")
+            }
+
+            holder.shown[slot] = permission
+            inventory.setItem(
+                slot,
+                HeadTextures.item(
+                    item,
+                    Placeholder.unparsed("player", name),
+                    Placeholder.parsed("status", status)
+                ).glow(enabled).clonedGet()
+            )
+        }
+    }
+
     private fun place(inventory: Inventory, slot: Int, item: ItemStack) {
-        if (slot < inventory.size) {
+        if (slot >= 0 && slot < inventory.size) {
             inventory.setItem(slot, item)
         }
     }
 
-    private fun createHead(uuid: UUID, name: String): ItemStack {
+    /**
+     * The head of a trusted player, the name and the lore are in the section of the route.
+     * Placeholders: <player>, <status> (online or offline), <permissions> (how many they have), <total>
+     */
+    private fun createHead(owner: UUID, uuid: UUID, name: String, route: String): ItemStack {
         val status = if (Bukkit.getPlayer(uuid) != null) {
             config.getString("status.online", "<#33FF33>Online")
         } else {
@@ -327,12 +514,14 @@ class MinionUsers(file: File, stream: InputStream) {
 
         val resolvers = arrayOf<TagResolver>(
             Placeholder.unparsed("player", name),
-            Placeholder.parsed("status", status)
+            Placeholder.parsed("status", status),
+            Placeholder.unparsed("permissions", (trusted[owner]?.get(uuid)?.size ?: 0).toString()),
+            Placeholder.unparsed("total", TrustPermission.entries.size.toString())
         )
 
         val item = ItemBuilder.create(Material.PLAYER_HEAD)
-            .setName(config.getString("user.name", "<player>"), *resolvers)
-            .setLore(config.getStringList("user.lore", emptyList()), *resolvers)
+            .setName(config.getString("$route.name", "<player>"), *resolvers)
+            .setLore(config.getStringList("$route.lore", emptyList()), *resolvers)
             .clonedGet()
 
         val meta = item.itemMeta as? SkullMeta ?: return item

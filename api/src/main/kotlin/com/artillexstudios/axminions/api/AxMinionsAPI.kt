@@ -23,6 +23,10 @@ interface AxMinionsAPI {
 
     fun getAxMinionsInstance(): AxPlugin
 
+    /**
+     * Returns how many minions the player can have, Int.MAX_VALUE means no limit (the player has the
+     * axminions.bypass.limit or the axminions.limit.* permission).
+     */
     fun getMinionLimit(player: Player): Int
 
     /**

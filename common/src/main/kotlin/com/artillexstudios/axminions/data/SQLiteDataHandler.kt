@@ -60,7 +60,17 @@ class SQLiteDataHandler : DataHandler {
                 statement.executeUpdate("CREATE INDEX IF NOT EXISTS `axminions_minions_owner` ON `axminions_minions`(`owner_id`);")
                 statement.executeUpdate("CREATE INDEX IF NOT EXISTS `axminions_minions_chest` ON `axminions_minions`(`chest_location_id`);")
                 statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_island_counter`(`island` VARCHAR(256) PRIMARY KEY, `placed` INT);")
-                statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_trusted`(`owner_id` VARCHAR(36), `trusted_id` VARCHAR(36), PRIMARY KEY(`owner_id`, `trusted_id`));")
+                statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_trusted`(`owner_id` VARCHAR(36), `trusted_id` VARCHAR(36), `permissions` TEXT, PRIMARY KEY(`owner_id`, `trusted_id`));")
+                // The players trusted before the permissions existed have none saved, they get the default ones
+                val trustedColumns = HashSet<String>()
+                statement.executeQuery("PRAGMA table_info(`axminions_trusted`);").use { resultSet ->
+                    while (resultSet.next()) {
+                        trustedColumns.add(resultSet.getString("name"))
+                    }
+                }
+                if ("permissions" !in trustedColumns) {
+                    statement.executeUpdate("ALTER TABLE `axminions_trusted` ADD COLUMN `permissions` TEXT;")
+                }
             }
         }
     }
@@ -434,16 +444,16 @@ class SQLiteDataHandler : DataHandler {
         }
     }
 
-    override fun loadTrustedUsers(): Map<UUID, Set<UUID>> {
-        val trusted = HashMap<UUID, MutableSet<UUID>>()
+    override fun loadTrustedUsers(): Map<UUID, Map<UUID, String?>> {
+        val trusted = HashMap<UUID, MutableMap<UUID, String?>>()
 
         dataSource.connection.use { connection ->
-            connection.prepareStatement("SELECT `owner_id`, `trusted_id` FROM `axminions_trusted`;").use { statement ->
+            connection.prepareStatement("SELECT `owner_id`, `trusted_id`, `permissions` FROM `axminions_trusted`;").use { statement ->
                 statement.executeQuery().use { resultSet ->
                     while (resultSet.next()) {
                         val owner = runCatching { UUID.fromString(resultSet.getString("owner_id")) }.getOrNull() ?: continue
                         val user = runCatching { UUID.fromString(resultSet.getString("trusted_id")) }.getOrNull() ?: continue
-                        trusted.getOrPut(owner) { HashSet() }.add(user)
+                        trusted.getOrPut(owner) { HashMap() }[user] = resultSet.getString("permissions")
                     }
                 }
             }
@@ -452,11 +462,23 @@ class SQLiteDataHandler : DataHandler {
         return trusted
     }
 
-    override fun addTrustedUser(owner: UUID, trusted: UUID) {
+    override fun addTrustedUser(owner: UUID, trusted: UUID, permissions: String) {
         dataSource.connection.use { connection ->
-            connection.prepareStatement("INSERT OR IGNORE INTO `axminions_trusted`(`owner_id`, `trusted_id`) VALUES(?, ?);").use { statement ->
+            connection.prepareStatement("INSERT OR IGNORE INTO `axminions_trusted`(`owner_id`, `trusted_id`, `permissions`) VALUES(?, ?, ?);").use { statement ->
                 statement.setString(1, owner.toString())
                 statement.setString(2, trusted.toString())
+                statement.setString(3, permissions)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    override fun setTrustedPermissions(owner: UUID, trusted: UUID, permissions: String) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("UPDATE `axminions_trusted` SET `permissions` = ? WHERE `owner_id` = ? AND `trusted_id` = ?;").use { statement ->
+                statement.setString(1, permissions)
+                statement.setString(2, owner.toString())
+                statement.setString(3, trusted.toString())
                 statement.executeUpdate()
             }
         }

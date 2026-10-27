@@ -12,6 +12,7 @@ import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.minions.Minion
 import com.artillexstudios.axminions.minions.Minions
+import com.artillexstudios.axminions.utils.Bypass
 import com.artillexstudios.axminions.utils.PlayerStats
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.Bukkit
@@ -100,6 +101,10 @@ class MinionPlaceListener : Listener {
         val maxMinions = AxMinionsAPI.INSTANCE.getMinionLimit(event.player)
         val maxOfType = AxMinionsAPI.INSTANCE.getTypeLimit(event.player, minionType.getName())
 
+        // They are read here, as the permissions of the player belong to the thread of the event
+        val bypassLimit = Bypass.limit(event.player)
+        val bypassIsland = Bypass.island(event.player)
+
         val chunk = location.chunk
 
         AxMinionsPlugin.dataQueue.submit {
@@ -122,7 +127,7 @@ class MinionPlaceListener : Listener {
                         event.player.sendMessage("Placed: $islandPlaced")
                     }
 
-                    if (islandPlaced >= islandLimit && !event.player.hasPermission("axminions.limit.*")) {
+                    if (islandPlaced >= islandLimit && !bypassIsland) {
                         if (Config.DEBUG()) {
                             event.player.sendMessage("Return")
                         }
@@ -147,7 +152,7 @@ class MinionPlaceListener : Listener {
                 }
             }
 
-            if (placed >= maxMinions && !prePlaceEvent.getShouldOverridePlayerLimit() && !event.player.hasPermission("axminions.limit.*")) {
+            if (placed >= maxMinions && !prePlaceEvent.getShouldOverridePlayerLimit() && !bypassLimit) {
                 event.player.sendMessage(
                     StringUtils.formatToString(
                         Messages.PREFIX() + Messages.PLACE_LIMIT_REACHED(),
@@ -164,7 +169,7 @@ class MinionPlaceListener : Listener {
                 return@submit
             }
 
-            if (maxOfType != null && !prePlaceEvent.getShouldOverridePlayerLimit() && !event.player.hasPermission("axminions.limit.*")) {
+            if (maxOfType != null && !prePlaceEvent.getShouldOverridePlayerLimit() && !bypassLimit) {
                 val placedOfType = AxMinionsPlugin.dataHandler.getMinionAmount(event.player.uniqueId, minionType.getName())
 
                 if (placedOfType >= maxOfType) {

@@ -63,7 +63,7 @@ upgrades:
   containers-unlocked: "<green>The minion can be linked to <white><max></white> containers now!" # When an upgrade lets the minion have more containers
 
 link:
-  success: "<green>Successfully linked the minion to a container!"
+  success: "<green>Successfully linked the minion to a container! <gray>(<linked>/<max>)" # <linked> is how many containers it is linked to now, <max> how many it can be linked to
   unlink: "<green>You have unliked the minion."
   fail: "<red>You can't link to that block! It's either too far away, or not a container!"
   start: "<green>Started linking! Click on a container!"
@@ -124,17 +124,18 @@ list:
     world-unavailable: "<red>The world of this minion isn't loaded!"
     minion-gone: "<red>This minion doesn't exist anymore!"
 
-# The trusted players, they can use all of your minions (/minions users)
+# The trusted players, they can open the menu of your minions, and what else they can do is set for each of them in the users.yml (/minions users)
 users:
   prompt: "<green>Type the name of the player you want to trust in the chat, or <white>cancel</white> to abort. <gray>(<seconds>s)"
   cancelled: "<red>Cancelled, nobody was added."
-  added: "<green><white><player></white> can now use your minions!"
+  added: "<green><white><player></white> can now use your minions! Left-click their head to choose what they are allowed to do."
   removed: "<green><white><player></white> can no longer use your minions."
   already-trusted: "<red><player> is already trusted!"
   self: "<red>You can't add yourself, your minions are already yours!"
   not-found: "<red>Could not find a player called <white><player></white>! They have to join the server first."
-  owner-only: "<red>Only the owner can do this! Trusted players can open the menu, change the tool, charge and upgrade the minion."
+  # Shown to a trusted player who tries something the owner didn't allow (/minions users). <permission> is the label of the permission in the users.yml
+  no-permission: "<red>The owner of this minion didn't allow you to do this! <gray>(<permission>)"
   no-access: "<red>You can't open the menu of this minion, because you are not its owner or one of the trusted players!"
 
 # Do not change!
-config-version: 21
+config-version: 22

@@ -72,7 +72,13 @@ class LinkingListener : Listener {
         }
 
         if (linked) {
-            event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_SUCCESS()))
+            event.player.sendMessage(
+                StringUtils.formatToString(
+                    Messages.PREFIX() + Messages.LINK_SUCCESS(),
+                    Placeholder.unparsed("linked", minion.getLinkedChests().size.toString()),
+                    Placeholder.unparsed("max", max.toString())
+                )
+            )
         } else if (full && !minion.isLinkedTo(chest)) {
             event.player.sendMessage(
                 StringUtils.formatToString(

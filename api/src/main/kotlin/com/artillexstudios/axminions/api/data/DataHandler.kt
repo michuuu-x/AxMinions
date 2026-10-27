@@ -55,11 +55,14 @@ interface DataHandler {
     fun getExtraSlots(user: UUID): Int
 
     /**
-     * Returns every owner with the players they trust to use their minions.
+     * Returns every owner with the players they trust to use their minions, and what the owner allowed them to do.
+     * The permissions are the text that was given to [addTrustedUser], null if the player never got any.
      */
-    fun loadTrustedUsers(): Map<UUID, Set<UUID>>
+    fun loadTrustedUsers(): Map<UUID, Map<UUID, String?>>
 
-    fun addTrustedUser(owner: UUID, trusted: UUID)
+    fun addTrustedUser(owner: UUID, trusted: UUID, permissions: String)
+
+    fun setTrustedPermissions(owner: UUID, trusted: UUID, permissions: String)
 
     fun removeTrustedUser(owner: UUID, trusted: UUID)
 

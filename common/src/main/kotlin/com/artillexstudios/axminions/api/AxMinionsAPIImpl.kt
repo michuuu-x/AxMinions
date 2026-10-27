@@ -10,6 +10,7 @@ import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.minions.Minions
+import com.artillexstudios.axminions.utils.Bypass
 import org.bukkit.entity.Player
 import java.io.File
 import java.util.Locale
@@ -23,6 +24,10 @@ class AxMinionsAPIImpl(private val plugin: AxMinionsPlugin) : AxMinionsAPI {
          * The extra slots are not in it, those come from the database.
          */
         fun permissionLimit(player: Player): Int {
+            if (Bypass.limit(player)) {
+                return Int.MAX_VALUE
+            }
+
             var limit = Config.DEFAULT_MINION_LIMIT()
 
             for (info in player.effectivePermissions) {
@@ -83,6 +88,10 @@ class AxMinionsAPIImpl(private val plugin: AxMinionsPlugin) : AxMinionsAPI {
     }
 
     override fun getTypeLimit(player: Player, type: String): Int? {
+        if (Bypass.limit(player)) {
+            return null
+        }
+
         val prefix = "$LIMIT_PERMISSION${type.lowercase(Locale.ENGLISH)}."
         var limit: Int? = null
 

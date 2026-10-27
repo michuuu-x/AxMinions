@@ -36,6 +36,8 @@ import com.artillexstudios.axminions.api.warnings.OwnerAlerts
 import com.artillexstudios.axminions.api.warnings.Warning
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.listeners.LinkingListener
+import com.artillexstudios.axminions.users.TrustPermission
+import com.artillexstudios.axminions.utils.Bypass
 import com.artillexstudios.axminions.utils.Enchantments
 import com.artillexstudios.axminions.utils.PlayerStats
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
@@ -186,10 +188,22 @@ class Minion(
                     } else {
                         if (ownerUUID == event.player.uniqueId) {
                             breakMinion(event)
-                        } else if ((canBuildAt && !Config.ONLY_OWNER_BREAK()) || event.player.hasPermission("axminions.*")) {
+                        } else if ((canBuildAt && !Config.ONLY_OWNER_BREAK()) || Bypass.owner(event.player)) {
+                            breakMinion(event)
+                        } else if (AxMinionsPlugin.users.hasPermission(ownerUUID, event.player.uniqueId, TrustPermission.PICKUP)) {
                             breakMinion(event)
                         } else {
                             broken.set(false)
+
+                            // A trusted player is told why it didn't work, the others have no business with this minion
+                            if (AxMinionsPlugin.users.isTrusted(ownerUUID, event.player.uniqueId)) {
+                                event.player.sendMessage(
+                                    StringUtils.formatToString(
+                                        Messages.PREFIX() + Messages.USERS_NO_PERMISSION(),
+                                        Placeholder.unparsed("permission", AxMinionsPlugin.users.getLabel(TrustPermission.PICKUP))
+                                    )
+                                )
+                            }
                         }
                     }
                 } else if (!type.isEnabled()) {
@@ -202,7 +216,7 @@ class Minion(
                 } else {
                     if (ownerUUID == event.player.uniqueId) {
                         openInventory(event.player)
-                    } else if ((canBuildAt && !Config.ONLY_OWNER_GUI()) || event.player.hasPermission("axminions.*")) {
+                    } else if ((canBuildAt && !Config.ONLY_OWNER_GUI()) || Bypass.owner(event.player)) {
                         openInventory(event.player)
                     } else if (AxMinionsPlugin.users.isTrusted(ownerUUID, event.player.uniqueId)) {
                         openInventory(event.player)
@@ -611,7 +625,7 @@ class Minion(
     }
 
     override fun hasFullAccess(player: Player): Boolean {
-        if (ownerUUID == player.uniqueId || player.hasPermission("axminions.*")) {
+        if (ownerUUID == player.uniqueId || Bypass.owner(player)) {
             return true
         }
 

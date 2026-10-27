@@ -28,8 +28,28 @@ softdepend:
 # Everything defaults to op, which is what the plugin did before the permissions were listed here,
 # except the axminions.use ones and axminions.command.alerts, those are true for everyone and are there to be taken away
 permissions:
+  # Every permission that lets a player get around a rule is in axminions.bypass.*, so a moderator can get
+  # only the one they need, without the commands. axminions.* includes all of them.
   "axminions.*":
-    description: "Open, use and pick up the minions of other players"
+    description: "Everything in axminions.bypass.*"
+    default: op
+    children:
+      "axminions.bypass.*": true
+  "axminions.bypass.*":
+    description: "Get around the owner, the minion limit and the island limit"
+    default: op
+    children:
+      "axminions.bypass.owner": true
+      "axminions.bypass.limit": true
+      "axminions.bypass.island": true
+  "axminions.bypass.owner":
+    description: "Open the menu of the minions of other players and pick them up, even if only-owner-gui and only-owner-break are true"
+    default: op
+  "axminions.bypass.limit":
+    description: "No limit on the amount of minions of the player (the total one and the ones of the types), the island limit is separate"
+    default: op
+  "axminions.bypass.island":
+    description: "Place minions on an island that reached the island limit"
     default: op
 
   "axminions.use.upgrade":
@@ -125,7 +145,7 @@ permissions:
 
   # Any number works as axminions.limit.<amount> and axminions.limit.<type>.<amount>, those can't be listed here
   "axminions.limit.*":
-    description: "No limit on the amount of minions, axminions.limit.<amount> sets the limit to the amount"
+    description: "No limit on the amount of minions of the player, like axminions.bypass.limit. axminions.limit.<amount> sets the limit to the amount"
     default: op
   "axminions.limit.collector.*":
     description: "No limit on the amount of collector minions, axminions.limit.collector.<amount> sets the limit to the amount"

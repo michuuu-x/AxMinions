@@ -184,7 +184,10 @@ class Messages(file: File, stream: InputStream) {
         @JvmStatic
         fun USERS_NOT_FOUND() = AxMinionsAPI.INSTANCE.getMessages().get<String>("users.not-found")
         @JvmStatic
-        fun USERS_OWNER_ONLY() = AxMinionsAPI.INSTANCE.getMessages().get<String>("users.owner-only")
+        fun USERS_NO_PERMISSION() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "users.no-permission",
+            "<red>The owner of this minion didn't allow you to do this! <gray>(<permission>)"
+        )
         @JvmStatic
         fun USERS_NO_ACCESS() = AxMinionsAPI.INSTANCE.getMessages().get<String>("users.no-access")
     }

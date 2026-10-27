@@ -37,16 +37,19 @@ disabled-worlds: []
 # The minions of one type can be limited with the 'axminions.limit.<type>.<amount>' permission, for example
 # 'axminions.limit.farmer.3', or 'axminions.limit.farmer.*' for no limit on that type.
 # The type limit comes on top of this one, a player can't have more minions than the total limit allows.
+# A player with the 'axminions.bypass.limit' permission (or 'axminions.limit.*') has no limit at all, but the island limit still applies to them.
 default-minion-limit: 5
 
 # If true, only the owner of this minion can pick it up (Shift + Right Click)
 # If false, everyone, who can break blocks at said location can pick up this minion
 # You should enable this, if you aren't using a supported protection plugin!
+# Players with the 'axminions.bypass.owner' permission can always pick up the minions of others.
 only-owner-break: true
 
 # If true, only the owner of this minion can open it's GUI
 # If false, everyone, who can break blocks at said location can open the GUI of this minion
 # You should enable this, if you aren't using a supported protection plugin!
+# Players with the 'axminions.bypass.owner' permission can always open the GUI of the minions of others.
 only-owner-gui: true
 
 # The owner of a minion gets a message when it stops working because of a problem (the ones the holograms show),
@@ -80,6 +83,7 @@ display-warnings: true
 can-break-tools: true
 
 # The limit to use for islands
+# Players with the 'axminions.bypass.island' permission can place minions on an island that is full.
 island-limit: 10
 
 # If true, when a player leaves an island's membership, gets kicked from it, or the island gets disbanded,

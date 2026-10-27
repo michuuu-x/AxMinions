@@ -103,10 +103,17 @@ class H2DataHandler : DataHandler {
         }
 
         dataSource.connection.use { connection ->
-            connection.prepareStatement("CREATE TABLE IF NOT EXISTS `axminions_trusted`(`owner_id` UUID, `trusted_id` UUID, PRIMARY KEY(`owner_id`, `trusted_id`));")
+            connection.prepareStatement("CREATE TABLE IF NOT EXISTS `axminions_trusted`(`owner_id` UUID, `trusted_id` UUID, `permissions` VARCHAR(512), PRIMARY KEY(`owner_id`, `trusted_id`));")
                 .use {
                     it.executeUpdate()
                 }
+        }
+
+        // The players trusted before the permissions existed have none saved, they get the default ones
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("ALTER TABLE `axminions_trusted` ADD COLUMN IF NOT EXISTS `permissions` VARCHAR(512);").use {
+                it.executeUpdate()
+            }
         }
     }
 
@@ -534,16 +541,16 @@ class H2DataHandler : DataHandler {
         }
     }
 
-    override fun loadTrustedUsers(): Map<UUID, Set<UUID>> {
-        val trusted = HashMap<UUID, MutableSet<UUID>>()
+    override fun loadTrustedUsers(): Map<UUID, Map<UUID, String?>> {
+        val trusted = HashMap<UUID, MutableMap<UUID, String?>>()
 
         dataSource.connection.use { connection ->
-            connection.prepareStatement("SELECT `owner_id`, `trusted_id` FROM `axminions_trusted`;").use { statement ->
+            connection.prepareStatement("SELECT `owner_id`, `trusted_id`, `permissions` FROM `axminions_trusted`;").use { statement ->
                 statement.executeQuery().use { resultSet ->
                     while (resultSet.next()) {
                         val owner = resultSet.getObject("owner_id") as UUID
                         val user = resultSet.getObject("trusted_id") as UUID
-                        trusted.getOrPut(owner) { HashSet() }.add(user)
+                        trusted.getOrPut(owner) { HashMap() }[user] = resultSet.getString("permissions")
                     }
                 }
             }
@@ -552,11 +559,23 @@ class H2DataHandler : DataHandler {
         return trusted
     }
 
-    override fun addTrustedUser(owner: UUID, trusted: UUID) {
+    override fun addTrustedUser(owner: UUID, trusted: UUID, permissions: String) {
         dataSource.connection.use { connection ->
-            connection.prepareStatement("MERGE INTO `axminions_trusted`(`owner_id`, `trusted_id`) KEY(`owner_id`, `trusted_id`) VALUES(?, ?);").use { statement ->
+            connection.prepareStatement("MERGE INTO `axminions_trusted`(`owner_id`, `trusted_id`, `permissions`) KEY(`owner_id`, `trusted_id`) VALUES(?, ?, ?);").use { statement ->
                 statement.setObject(1, owner)
                 statement.setObject(2, trusted)
+                statement.setString(3, permissions)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    override fun setTrustedPermissions(owner: UUID, trusted: UUID, permissions: String) {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("UPDATE `axminions_trusted` SET `permissions` = ? WHERE `owner_id` = ? AND `trusted_id` = ?;").use { statement ->
+                statement.setString(1, permissions)
+                statement.setObject(2, owner)
+                statement.setObject(3, trusted)
                 statement.executeUpdate()
             }
         }

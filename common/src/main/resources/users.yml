@@ -1,8 +1,8 @@
 # The menu opened with /minions users (permission: axminions.command.users)
-# It shows the players you trust. A trusted player can use all of your minions: open their menu,
-# change the tool, charge (when charge.enabled is true in the config.yml) and upgrade them.
-# Everything else (rotating, linking, collecting the storage, picking them up) stays reserved for you.
-# Click the head of a player to remove them from the list.
+# It shows the players you trust. A trusted player can open the menu of all of your minions,
+# what else they can do is up to you: Left Click on the head of a player opens their permissions.
+# Shift + Right Click on the head of a player removes them from the list.
+# The money of a seller always goes to its owner, also when a trusted player collects it.
 
 title: "<#5555FF>Trusted Players"
 
@@ -17,6 +17,14 @@ filler:
 # Every entry is either a slot, or a range of slots (for example "9-17"). 0 is the top left.
 user-slots:
   - "9-17"
+
+# What a player is allowed to do when they are added to the list, you can change it for each player in their menu.
+# Players that were added before the permissions existed get these too, until you change their permissions.
+# Can be: upgrade, link, charge, pickup, tool, toggle, rotate, statistics
+default-permissions:
+  - "upgrade"
+  - "charge"
+  - "toggle"
 
 # Adds a new player. After clicking it the menu closes and you have to type the name of the player in the chat.
 # The message is only used for that, nobody else sees it. Typing "cancel" aborts it.
@@ -54,19 +62,159 @@ next:
       - "<gray>Page <page>/<pages>"
 
 # How every trusted player is shown. The icon is always the head of the player.
-# Placeholders: <player>, <status>
+# Placeholders: <player>, <status>, <permissions> (how many things they are allowed to do), <total>
 user:
   name: "<#00FF99><player>"
   lore:
     - ""
     - " <#00AAFF>• <white>Status: <status>"
+    - " <#00AAFF>• <white>Permissions: <#00FF99><permissions>/<total>"
     - ""
-    - "<red>Click to remove"
+    - "<#00FF99>Left Click: <gray>edit the permissions"
+    - "<red>Shift + Right Click: <gray>remove"
 
 # What <status> shows
 status:
   online: "<#33FF33>Online"
   offline: "<#AAAAAA>Offline"
 
+# The menu of one trusted player, where you choose what they are allowed to do. Click on a permission to switch it.
+# A trusted player can always open the menu of your minions, that is what the trust gives.
+permissions-menu:
+  # Placeholders: <player>
+  title: "<#5555FF>Permissions: <player>"
+
+  # Has to be a multiple of 9, between 18 and 54
+  size: 36
+
+  # The head of the player. Placeholders: <player>, <status>, <permissions>, <total>
+  head:
+    slot: 4
+    name: "<#00FF99><player>"
+    lore:
+      - ""
+      - " <#00AAFF>• <white>Status: <status>"
+      - " <#00AAFF>• <white>Permissions: <#00FF99><permissions>/<total>"
+
+  # Goes back to the list of the trusted players
+  back:
+    slot: 27
+    item:
+      type: "arrow"
+      name: "<white>Back"
+
+  # What <status> shows in the permissions
+  status:
+    enabled: "<#33FF33>Allowed"
+    disabled: "<#FF3333>Not allowed"
+
+  # Every permission has its own 'slot' and 'item'. The item glows while the permission is allowed.
+  # Placeholders in the item: <player>, <status>
+  # The 'label' is what the trusted player reads in the message when they try something that isn't allowed.
+  permissions:
+    upgrade:
+      label: "Upgrade"
+      slot: 10
+      item:
+        type: "experience_bottle"
+        name: "<#00FF99><b>Upgrade"
+        lore:
+          - "<gray>Upgrade your minions."
+          - "<gray>They pay for the upgrade themselves."
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+    link:
+      label: "Link containers"
+      slot: 12
+      item:
+        type: "chest"
+        name: "<#00FF99><b>Link containers"
+        lore:
+          - "<gray>Link your minions to containers,"
+          - "<gray>and unlink them."
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+    charge:
+      label: "Charge"
+      slot: 14
+      item:
+        type: "lava_bucket"
+        name: "<#00FF99><b>Charge"
+        lore:
+          - "<gray>Charge your minions."
+          - "<gray>They pay for the charge themselves."
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+    pickup:
+      label: "Pick up"
+      slot: 16
+      item:
+        type: "hopper"
+        name: "<#00FF99><b>Pick up"
+        lore:
+          - "<gray>Pick up your minions (Shift + Right Click)."
+          - "<gray>The minion and its tool go to them!"
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+    tool:
+      label: "Change the tool"
+      slot: 19
+      item:
+        type: "diamond_pickaxe"
+        name: "<#00FF99><b>Change the tool"
+        lore:
+          - "<gray>Put a tool into your minions,"
+          - "<gray>swap it, or take it out."
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+    toggle:
+      label: "Start / Stop"
+      slot: 21
+      item:
+        type: "lime_dye"
+        name: "<#00FF99><b>Start / Stop"
+        lore:
+          - "<gray>Start and stop your minions."
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+    rotate:
+      label: "Rotate"
+      slot: 23
+      item:
+        type: "ender_eye"
+        name: "<#00FF99><b>Rotate"
+        lore:
+          - "<gray>Rotate your minions."
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+    statistics:
+      label: "Withdraw money / XP"
+      slot: 25
+      item:
+        type: "gold_ingot"
+        name: "<#00FF99><b>Withdraw money / XP"
+        lore:
+          - "<gray>Collect what your minions stored."
+          - "<gray>The money of a seller goes to you,"
+          - "<gray>the XP of the others goes to them."
+          - ""
+          - " <#00AAFF>• <white>Status: <status>"
+          - ""
+          - "<gray>Click to switch"
+
 # Do not change!
-config-version: 2
+config-version: 3

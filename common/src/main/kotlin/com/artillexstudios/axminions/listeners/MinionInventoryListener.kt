@@ -13,6 +13,7 @@ import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.CoolDown
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.api.utils.fastFor
+import com.artillexstudios.axminions.users.TrustPermission
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import java.util.Locale
@@ -32,8 +33,16 @@ import org.bukkit.persistence.PersistentDataType
 
 class MinionInventoryListener : Listener {
     private companion object {
-        // Players who can open the menu only because the owner trusts them can't do these, nor take the tool out
-        val OWNER_ACTIONS = setOf("rotate", "link", "statistics")
+        // Players who can open the menu only because the owner trusts them need the owner to allow these,
+        // the same goes for changing the tool, and for picking the minion up (in the Minion)
+        val TRUST_PERMISSIONS = mapOf(
+            "upgrade" to TrustPermission.UPGRADE,
+            "link" to TrustPermission.LINK,
+            "charge" to TrustPermission.CHARGE,
+            "toggle" to TrustPermission.TOGGLE,
+            "rotate" to TrustPermission.ROTATE,
+            "statistics" to TrustPermission.STATISTICS
+        )
 
         // Everyone has these unless they are taken away, the pickup one is in the Minion
         val ACTION_PERMISSIONS = mapOf(
@@ -89,8 +98,7 @@ class MinionInventoryListener : Listener {
                 return
             }
 
-            // Trusted players can only fill an empty tool slot, they can't take the tool of the owner by swapping it
-            if (minion.getTool()?.type != Material.AIR && ownerOnly(player, minion)) return
+            if (denied(player, minion, TrustPermission.TOOL)) return
 
             val minionToolEvent = MinionToolEvent(minion, player, event.currentItem!!.clone(), minion.getTool()!!.clone())
             Bukkit.getPluginManager().callEvent(minionToolEvent)
@@ -114,7 +122,7 @@ class MinionInventoryListener : Listener {
 
         if (event.slot == AxMinionsAPI.INSTANCE.getConfig().get("gui.items.item.slot")) {
             if (minion.getTool()?.type == Material.AIR) return
-            if (ownerOnly(player, minion)) return
+            if (denied(player, minion, TrustPermission.TOOL)) return
             if (player.inventory.firstEmpty() == -1) {
                 player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_INVENTORY_FULL()))
                 return
@@ -144,7 +152,8 @@ class MinionInventoryListener : Listener {
         if (!meta.persistentDataContainer.has(Keys.GUI, PersistentDataType.STRING)) return
         val type = meta.persistentDataContainer.get(Keys.GUI, PersistentDataType.STRING)
 
-        if (type != null && type in OWNER_ACTIONS && ownerOnly(player, minion)) return
+        val trustPermission = type?.let { TRUST_PERMISSIONS[it] }
+        if (trustPermission != null && denied(player, minion, trustPermission)) return
 
         val permission = type?.let { ACTION_PERMISSIONS[it] }
         if (permission != null && !player.hasPermission(permission)) {
@@ -391,12 +400,18 @@ class MinionInventoryListener : Listener {
         holder.removeOpenInventory(event.inventory)
     }
 
-    private fun ownerOnly(player: Player, minion: Minion): Boolean {
-        if (minion.hasFullAccess(player)) {
+    // Returns true (and tells the player) if they can open this menu only because the owner trusts them, and the owner didn't allow this
+    private fun denied(player: Player, minion: Minion, permission: TrustPermission): Boolean {
+        if (minion.hasFullAccess(player) || AxMinionsPlugin.users.hasPermission(minion.getOwnerUUID(), player.uniqueId, permission)) {
             return false
         }
 
-        player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.USERS_OWNER_ONLY()))
+        player.sendMessage(
+            StringUtils.formatToString(
+                Messages.PREFIX() + Messages.USERS_NO_PERMISSION(),
+                Placeholder.unparsed("permission", AxMinionsPlugin.users.getLabel(permission))
+            )
+        )
         return true
     }
 

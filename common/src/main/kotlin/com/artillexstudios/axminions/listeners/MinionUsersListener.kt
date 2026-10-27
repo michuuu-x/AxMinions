@@ -17,14 +17,14 @@ class MinionUsersListener : Listener {
 
     @EventHandler
     fun onInventoryDragEvent(event: InventoryDragEvent) {
-        if (event.inventory.holder !is MinionUsers.Holder) return
+        if (event.inventory.holder !is MinionUsers.MenuHolder) return
 
         event.isCancelled = true
     }
 
     @EventHandler
     fun onInventoryClickEvent(event: InventoryClickEvent) {
-        val holder = event.inventory.holder as? MinionUsers.Holder ?: return
+        val holder = event.inventory.holder as? MinionUsers.MenuHolder ?: return
         event.isCancelled = true
 
         if (event.clickedInventory != event.inventory) return
@@ -37,7 +37,7 @@ class MinionUsersListener : Listener {
 
         coolDown.add(player, 250)
 
-        AxMinionsPlugin.users.click(player, holder, event.slot)
+        AxMinionsPlugin.users.click(player, holder, event.slot, event.click)
     }
 
     // The name of a new trusted player is typed in the chat, it has to be handled before any chat plugin sees it
