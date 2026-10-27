@@ -82,6 +82,12 @@ class H2DataHandler : DataHandler {
         }
 
         dataSource.connection.use { connection ->
+            connection.prepareStatement("ALTER TABLE `axminions_minions` ADD COLUMN IF NOT EXISTS `extra_chests` CLOB;").use {
+                it.executeUpdate()
+            }
+        }
+
+        dataSource.connection.use { connection ->
             connection.prepareStatement("ALTER TABLE `axminions_users` ADD COLUMN IF NOT EXISTS `island_slots` INT DEFAULT(0);").use {
                 it.executeUpdate()
             }
@@ -150,6 +156,7 @@ class H2DataHandler : DataHandler {
                         if (chestLocationId != 0) {
                             chestLocation = getLocation(chestLocationId)
                         }
+                        val extraChests = ChestLocations.deserialize(resultSet.getString("extra_chests"))
 
                         var itemStack = ItemStack(Material.AIR)
                         if (tool != null) {
@@ -170,7 +177,8 @@ class H2DataHandler : DataHandler {
                             locationId,
                             chestLocationId,
                             charge,
-                            working
+                            working,
+                            extraChests
                         )
                     }
                 }
@@ -299,7 +307,7 @@ class H2DataHandler : DataHandler {
         }
 
         dataSource.connection.use { connection ->
-            connection.prepareStatement("MERGE INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`) KEY(`location_id`) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+            connection.prepareStatement("MERGE INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`, `extra_chests`) KEY(`location_id`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
                 .use { statement ->
                     statement.setInt(1, locationId)
                     if (linkedChestId == null) {
@@ -320,6 +328,13 @@ class H2DataHandler : DataHandler {
                     }
                     statement.setLong(10, minion.getCharge())
                     statement.setBoolean(11, minion.isWorking())
+                    // The first container has its own column
+                    val extraChests = ChestLocations.serialize(minion.getLinkedChests().drop(1))
+                    if (extraChests == null) {
+                        statement.setNull(12, Types.CLOB)
+                    } else {
+                        statement.setString(12, extraChests)
+                    }
                     statement.executeUpdate()
                 }
         }
@@ -380,6 +395,40 @@ class H2DataHandler : DataHandler {
         }
 
         return 0
+    }
+
+    override fun getMinionAmount(uuid: UUID, type: String): Int {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT COUNT(*) FROM `axminions_minions` WHERE `owner_id` = ? AND `type_id` = (SELECT `id` FROM `axminions_types` WHERE `name` = ?);")
+                .use { statement ->
+                    statement.setObject(1, uuid)
+                    statement.setString(2, type)
+                    statement.executeQuery().use { resultSet ->
+                        if (resultSet.next()) {
+                            return resultSet.getInt(1)
+                        }
+                    }
+                }
+        }
+
+        return 0
+    }
+
+    override fun getMinionAmounts(uuid: UUID): Map<String, Int> {
+        val amounts = HashMap<String, Int>()
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT `types`.`name`, COUNT(*) FROM `axminions_minions` AS `minions` JOIN `axminions_types` AS `types` ON `minions`.`type_id` = `types`.`id` WHERE `minions`.`owner_id` = ? GROUP BY `types`.`name`;")
+                .use { statement ->
+                    statement.setObject(1, uuid)
+                    statement.executeQuery().use { resultSet ->
+                        while (resultSet.next()) {
+                            amounts[resultSet.getString(1)] = resultSet.getInt(2)
+                        }
+                    }
+                }
+        }
+
+        return amounts
     }
 
     override fun isMinion(location: Location): Boolean {

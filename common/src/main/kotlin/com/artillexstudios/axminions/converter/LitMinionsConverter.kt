@@ -6,6 +6,7 @@ import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.minions.Direction
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.minions.Minion
+import com.artillexstudios.axminions.utils.PlayerStats
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.Locale
@@ -62,6 +63,7 @@ class LitMinionsConverter : Converter {
                         val minion = Minion(location, uuid, Bukkit.getOfflinePlayer(uuid), type, level, ItemStack(Material.AIR), chestLocation, direction, statistics, storage, locationId, chestLocationId, 0)
                         minion.setTicking(true)
                         AxMinionsPlugin.dataHandler.saveMinion(minion)
+                        PlayerStats.invalidate(uuid)
                     }
                 }
             }

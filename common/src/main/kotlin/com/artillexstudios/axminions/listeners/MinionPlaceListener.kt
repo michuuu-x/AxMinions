@@ -12,6 +12,7 @@ import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.minions.Minion
 import com.artillexstudios.axminions.minions.Minions
+import com.artillexstudios.axminions.utils.PlayerStats
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -46,6 +47,19 @@ class MinionPlaceListener : Listener {
             return
         }
 
+        // The 'disabled-worlds' of the config.yml and of the type, minions that are already in the world are not affected
+        val worldName = event.clickedBlock!!.world.name
+        if (minionType.isWorldDisabled(worldName)) {
+            event.player.sendMessage(
+                StringUtils.formatToString(
+                    Messages.PREFIX() + Messages.PLACE_WORLD_DISABLED(),
+                    Placeholder.unparsed("type", minionType.getName()),
+                    Placeholder.unparsed("world", worldName)
+                )
+            )
+            return
+        }
+
         if (!AxMinionsPlugin.integrations.getProtectionIntegration()
                 .canBuildAt(event.player, event.clickedBlock!!.location)
         ) {
@@ -54,6 +68,13 @@ class MinionPlaceListener : Listener {
                     "Could not place due to protection hook!"
                 )
             }
+            return
+        }
+
+        val location = event.clickedBlock!!.getRelative(event.blockFace).location
+
+        if (!AxMinionsPlugin.integrations.getProtectionIntegration().canPlaceMinionAt(event.player, location)) {
+            event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.PLACE_REGION_DENIED()))
             return
         }
 
@@ -76,9 +97,8 @@ class MinionPlaceListener : Listener {
         meta.persistentDataContainer.set(Keys.PLACED, PersistentDataType.BYTE, 0)
         item.itemMeta = meta
 
-        val location = event.clickedBlock!!.getRelative(event.blockFace).location
-
         val maxMinions = AxMinionsAPI.INSTANCE.getMinionLimit(event.player)
+        val maxOfType = AxMinionsAPI.INSTANCE.getTypeLimit(event.player, minionType.getName())
 
         val chunk = location.chunk
 
@@ -122,9 +142,6 @@ class MinionPlaceListener : Listener {
                         }
                         return@submit
                     } else {
-                        if (Config.DEBUG()) {
-                            event.player.sendMessage("Not return ${islandPlaced >= islandLimit} ${!event.player.hasPermission("axminions.limit.*")}")
-                        }
                         islandPlaced++
                     }
                 }
@@ -145,6 +162,28 @@ class MinionPlaceListener : Listener {
                     item.itemMeta = meta
                 }
                 return@submit
+            }
+
+            if (maxOfType != null && !prePlaceEvent.getShouldOverridePlayerLimit() && !event.player.hasPermission("axminions.limit.*")) {
+                val placedOfType = AxMinionsPlugin.dataHandler.getMinionAmount(event.player.uniqueId, minionType.getName())
+
+                if (placedOfType >= maxOfType) {
+                    event.player.sendMessage(
+                        StringUtils.formatToString(
+                            Messages.PREFIX() + Messages.PLACE_TYPE_LIMIT_REACHED(),
+                            Placeholder.unparsed("type", minionType.getName()),
+                            Placeholder.unparsed("placed", placedOfType.toString()),
+                            Placeholder.unparsed("max", maxOfType.toString())
+                        )
+                    )
+
+                    Scheduler.get().run { _ ->
+                        meta = item.itemMeta!!
+                        meta.persistentDataContainer.remove(Keys.PLACED)
+                        item.itemMeta = meta
+                    }
+                    return@submit
+                }
             }
 
             if (AxMinionsPlugin.dataHandler.isMinion(location)) {
@@ -196,9 +235,11 @@ class MinionPlaceListener : Listener {
 
             minion.setOwnerOnline(true)
             AxMinionsPlugin.dataHandler.saveMinion(minion)
+            PlayerStats.invalidate(event.player.uniqueId)
 
             if (islandId.isNotBlank()) {
                 AxMinionsPlugin.dataHandler.islandPlace(islandId)
+                PlayerStats.invalidateIsland(islandId)
             }
 
             event.player.sendMessage(

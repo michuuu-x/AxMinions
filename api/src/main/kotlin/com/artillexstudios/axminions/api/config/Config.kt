@@ -91,6 +91,18 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun MINION_TYPE_ENABLED(type: String) = AxMinionsAPI.INSTANCE.getConfig().get("minion-types.$type", true)
         @JvmStatic
+        fun ALERTS_ENABLED() = AxMinionsAPI.INSTANCE.getConfig().get("alerts.enabled", true)
+        @JvmStatic
+        fun ALERTS_TYPE() = AxMinionsAPI.INSTANCE.getConfig().get("alerts.type", "both").lowercase(Locale.ENGLISH)
+        @JvmStatic
+        fun ALERTS_COOLDOWN() = AxMinionsAPI.INSTANCE.getConfig().get("alerts.cooldown", 600)
+        @JvmStatic
+        fun ALERTS_MIN_GAP() = AxMinionsAPI.INSTANCE.getConfig().get("alerts.min-gap", 3)
+        @JvmStatic
+        fun ALERTS_WARNINGS(): List<String> = AxMinionsAPI.INSTANCE.getConfig().getConfig().getStringList("alerts.warnings", listOf("no-tool", "container-full", "no-charge"))
+        @JvmStatic
+        fun DISABLED_WORLDS(): List<String> = AxMinionsAPI.INSTANCE.getConfig().getConfig().getStringList("disabled-worlds", emptyList())
+        @JvmStatic
         fun DEBUG(): Boolean {
             if (debug === null) {
                 debug = AxMinionsAPI.INSTANCE.getConfig().get("debug", false)

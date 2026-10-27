@@ -12,13 +12,14 @@ import com.artillexstudios.axminions.api.config.Messages
 import com.artillexstudios.axminions.api.data.DataHandler
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
+import com.artillexstudios.axminions.api.warnings.OwnerAlerts
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.commands.AxMinionsCommand
 import com.artillexstudios.axminions.commands.MinionsCommand
 import com.artillexstudios.axminions.data.H2DataHandler
 import com.artillexstudios.axminions.data.SQLiteDataHandler
-import com.artillexstudios.axminions.data.YamlDataHandler
 import com.artillexstudios.axminions.integrations.Integrations
+import com.artillexstudios.axminions.integrations.protection.WorldGuardIntegration
 import com.artillexstudios.axminions.listeners.ChunkListener
 import com.artillexstudios.axminions.listeners.LinkedChestListener
 import com.artillexstudios.axminions.listeners.LinkingListener
@@ -80,6 +81,11 @@ class AxMinionsPlugin : AxPlugin() {
     override fun load() {
         INSTANCE = this
         AxMinionsAPI.INSTANCE = AxMinionsAPIImpl(this)
+
+        // The flags have to be registered before WorldGuard enables, which is after this, as it is a softdepend
+        if (Bukkit.getPluginManager().getPlugin("WorldGuard") != null) {
+            WorldGuardIntegration.registerFlags()
+        }
     }
 
     override fun enable() {
@@ -152,6 +158,9 @@ class AxMinionsPlugin : AxPlugin() {
             it.registerEvents(MinionUsersListener(), this)
         }
 
+        // The players who are already online when the plugin is enabled (a reload) don't join again
+        Bukkit.getOnlinePlayers().forEach { OwnerAlerts.load(it) }
+
         // Retroactively load minions for the already loaded worlds
         Bukkit.getWorlds().fastFor { world ->
             MinionTypes.getMinionTypes().fastFor { _, v ->
@@ -207,7 +216,11 @@ class AxMinionsPlugin : AxPlugin() {
         dataHandler = when (Config.DATABASE_TYPE().uppercase(Locale.ENGLISH)) {
             "H2" -> H2DataHandler()
             "SQLITE" -> SQLiteDataHandler()
-            "YAML", "YML" -> YamlDataHandler()
+            "YAML", "YML" -> {
+                logger.warning("The YAML database type is not supported anymore, falling back to H2! The minions saved in data.yml are not loaded.")
+                H2DataHandler()
+            }
+
             else -> {
                 logger.warning("Unknown database type ${Config.DATABASE_TYPE()}, falling back to H2!")
                 H2DataHandler()

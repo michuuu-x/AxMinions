@@ -125,6 +125,10 @@ class MinionUsers(file: File, stream: InputStream) {
         return trusted[owner]?.toList() ?: emptyList()
     }
 
+    fun getTrustedCount(owner: UUID): Int {
+        return trusted[owner]?.size ?: 0
+    }
+
     fun open(player: Player) {
         val holder = Holder(player.uniqueId)
         val inventory = Bukkit.createInventory(holder, size, StringUtils.formatToString(config.getString("title", "Trusted Players")))

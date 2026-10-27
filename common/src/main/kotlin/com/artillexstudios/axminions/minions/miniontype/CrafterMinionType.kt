@@ -6,7 +6,6 @@ import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.minions.MinionTicker
 import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.inventory.*
 
 class CrafterMinionType : MinionType("crafter", AxMinionsPlugin.INSTANCE.getResource("minions/crafter.yml")!!) {
@@ -22,29 +21,10 @@ class CrafterMinionType : MinionType("crafter", AxMinionsPlugin.INSTANCE.getReso
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedChest() == null) {
+        minion.validateLinkedChests()
+        val inventories = minion.getLinkedInventories()
+        if (inventories.isEmpty()) {
             Warnings.NO_CONTAINER.display(minion)
-            return
-        }
-
-        val type = minion.getLinkedChest()!!.block.type
-        if (type == Material.CHEST && minion.getLinkedInventory() !is DoubleChestInventory && hasChestOnSide(minion.getLinkedChest()!!.block)) {
-            minion.setLinkedChest(minion.getLinkedChest())
-        }
-
-        if (type == Material.CHEST && minion.getLinkedInventory() is DoubleChestInventory && !hasChestOnSide(minion.getLinkedChest()!!.block)) {
-            minion.setLinkedChest(minion.getLinkedChest())
-        }
-
-        if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.BARREL) {
-            Warnings.NO_CONTAINER.display(minion)
-            minion.setLinkedChest(null)
-            return
-        }
-
-        if (minion.getLinkedInventory() == null) {
-            Warnings.NO_CONTAINER.display(minion)
-            minion.setLinkedChest(null)
             return
         }
 
@@ -57,9 +37,16 @@ class CrafterMinionType : MinionType("crafter", AxMinionsPlugin.INSTANCE.getReso
 
         Warnings.remove(minion, Warnings.NO_TOOL)
 
-        val tool = minion.getTool()
+        val tool = minion.getTool() ?: return
 
-        val recipes = Bukkit.getRecipesFor(tool ?: return)
+        // Every linked container is crafted in on its own, the ingredients and the result are in the same one
+        for (inventory in inventories) {
+            craft(minion, tool, inventory)
+        }
+    }
+
+    private fun craft(minion: Minion, tool: ItemStack, inv: Inventory) {
+        val recipes = Bukkit.getRecipesFor(tool)
         val shaped = arrayListOf<ShapedRecipe>()
         val shapeless = arrayListOf<ShapelessRecipe>()
 
@@ -71,7 +58,6 @@ class CrafterMinionType : MinionType("crafter", AxMinionsPlugin.INSTANCE.getReso
             }
         }
 
-        val inv = minion.getLinkedInventory() ?: return
         val items = inv.contents
 
         val contents = HashMap<ItemStack, Int>()

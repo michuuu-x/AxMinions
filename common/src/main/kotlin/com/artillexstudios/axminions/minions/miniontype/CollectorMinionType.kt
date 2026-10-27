@@ -4,17 +4,16 @@ import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.AxMinionsAPI
 import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
-import com.artillexstudios.axminions.api.utils.MinionUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.utils.Enchantments
+import com.artillexstudios.axminions.utils.MaterialList
 import kotlin.math.roundToInt
-import org.bukkit.Material
 import org.bukkit.entity.Item
-import org.bukkit.inventory.DoubleChestInventory
 
 class CollectorMinionType : MinionType("collector", AxMinionsPlugin.INSTANCE.getResource("minions/collector.yml")!!) {
+    private val whitelist = MaterialList("whitelist")
 
     override fun shouldRun(minion: Minion): Boolean {
         return MinionTicker.getTick() % minion.getNextAction() == 0L
@@ -29,33 +28,13 @@ class CollectorMinionType : MinionType("collector", AxMinionsPlugin.INSTANCE.get
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedInventory() != null && !MinionUtils.isFull(minion.getLinkedInventory()!!)) {
+        if (minion.hasContainerSpace()) {
             Warnings.remove(minion, Warnings.CONTAINER_FULL)
         }
 
-        if (minion.getLinkedChest() == null) {
+        minion.validateLinkedChests()
+        if (minion.getLinkedInventories().isEmpty()) {
             Warnings.NO_CONTAINER.display(minion)
-            return
-        }
-
-        val type = minion.getLinkedChest()!!.block.type
-        if (type == Material.CHEST && minion.getLinkedInventory() !is DoubleChestInventory && hasChestOnSide(minion.getLinkedChest()!!.block)) {
-            minion.setLinkedChest(minion.getLinkedChest())
-        }
-
-        if (type == Material.CHEST && minion.getLinkedInventory() is DoubleChestInventory && !hasChestOnSide(minion.getLinkedChest()!!.block)) {
-            minion.setLinkedChest(minion.getLinkedChest())
-        }
-
-        if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.BARREL) {
-            Warnings.NO_CONTAINER.display(minion)
-            minion.setLinkedChest(null)
-            return
-        }
-
-        if (minion.getLinkedInventory() == null) {
-            Warnings.NO_CONTAINER.display(minion)
-            minion.setLinkedChest(null)
             return
         }
 
@@ -75,8 +54,15 @@ class CollectorMinionType : MinionType("collector", AxMinionsPlugin.INSTANCE.get
             minion.getRange()
         )
 
+        // An empty whitelist picks up every item
+        val allowed = whitelist.get(this)
+
         entities?.filterIsInstance<Item>()?.fastFor { item ->
-            if (minion.getLinkedInventory()?.let { MinionUtils.isFull(it) } == true) {
+            if (allowed.isNotEmpty() && item.itemStack.type !in allowed) {
+                return@fastFor
+            }
+
+            if (minion.areContainersFull()) {
                 Warnings.CONTAINER_FULL.display(minion)
                 return
             }

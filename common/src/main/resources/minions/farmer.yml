@@ -18,6 +18,19 @@ tool:
 # If set to face: checks blocks only in the facing of the minion (Least resource intensive)
 mode: sphere
 
+# The crops this minion harvests (Bukkit Material names, case-insensitive), as the item or the block:
+# wheat, carrot, potato, beetroot, nether_wart, sugar_cane, cactus, bamboo, melon, pumpkin, cocoa_beans,
+# sweet_berries, pitcher_pod, torchflower. If the list is empty, it harvests every crop. For example:
+# crops:
+#   - "wheat"
+#   - "carrot"
+# The custom blocks of ItemsAdder can't be listed, so the minion leaves them alone while there is a list.
+crops: []
+
+# The worlds where this minion can't be placed (not case-sensitive), on top of 'disabled-worlds' in the config.yml.
+# Minions that are already in these worlds keep working.
+disabled-worlds: []
+
 item:
   type: "player_head"
   texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDAxZTAzNWEzZDhkNjEyNjA3MmJjYmU1MmE5NzkxM2FjZTkzNTUyYTk5OTk1YjVkNDA3MGQ2NzgzYTMxZTkwOSJ9fX0="
@@ -41,6 +54,7 @@ gui:
       - " <gray>- <white>Level: <green><level> » <dark_green><next_level>"
       - " <gray>- <white>Range: <green><range> » <dark_green><next_range>"
       - " <gray>- <white>Speed: <green><speed> » <dark_green><next_speed>"
+      - " <gray>- <white>Containers: <green><containers> » <dark_green><next_containers>"
       - ""
       - "<#00CCFF>Requirements:"
       - " <gray>- <white>Money: <#33FF33><price>$"
@@ -57,6 +71,9 @@ gui:
 
 upgrades:
   1:
+    # How many containers the minion can be linked to, the items go to the next one when a container is full.
+    # A level keeps the amount of the level before it, unless it sets its own.
+    containers: 1
     range: 2
     speed: 200
     items:
@@ -82,6 +99,7 @@ upgrades:
       money: 1000
       actions: 10
   3:
+    containers: 2
     range: 3
     speed: 180
     requirements:
@@ -94,6 +112,7 @@ upgrades:
       money: 10000
       actions: 100
   5:
+    containers: 3
     range: 3.5
     speed: 160
     requirements:
@@ -124,6 +143,7 @@ upgrades:
       money: 1000000
       actions: 25000
   10:
+    containers: 4
     range: 6
     speed: 100
     requirements:

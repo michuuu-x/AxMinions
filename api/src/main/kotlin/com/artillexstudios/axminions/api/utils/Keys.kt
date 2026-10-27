@@ -16,4 +16,7 @@ object Keys {
     val PLACED = NamespacedKey(AxMinionsAPI.INSTANCE.getAxMinionsInstance(), "placed")
     @JvmField
     val CHARGE = NamespacedKey(AxMinionsAPI.INSTANCE.getAxMinionsInstance(), "charge")
+    // On the player, set if they turned off the alerts about their minions
+    @JvmField
+    val ALERTS_OFF = NamespacedKey(AxMinionsAPI.INSTANCE.getAxMinionsInstance(), "alerts_off")
 }

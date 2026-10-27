@@ -1,13 +1,13 @@
 plugins {
     id 'java-library'
-    id 'com.gradleup.shadow' version "9.4.1"
+    id 'com.gradleup.shadow' version "9.6.1"
     id 'maven-publish'
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '2.3.21'
 }
 
 group = 'com.artillexstudios.axminions'
-version = '1.0.23-b2'
+version = '1.0.23-b3'
 
 repositories {
     mavenCentral()

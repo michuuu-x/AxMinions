@@ -28,6 +28,16 @@ interface DataHandler {
 
     fun getMinionAmount(uuid: UUID): Int
 
+    /**
+     * Returns the amount of minions the player has of the type with the given name.
+     */
+    fun getMinionAmount(uuid: UUID, type: String): Int
+
+    /**
+     * Returns the amount of minions the player has by the name of their type, the types the player has none of are not in the map.
+     */
+    fun getMinionAmounts(uuid: UUID): Map<String, Int>
+
     fun isMinion(location: Location): Boolean
 
     fun islandPlace(island: String)

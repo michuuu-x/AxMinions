@@ -62,6 +62,15 @@ abstract class MinionType(private val name: String, private val defaults: InputS
         return com.artillexstudios.axminions.api.config.Config.MINION_TYPE_ENABLED(name)
     }
 
+    /**
+     * Whether minions of this type can't be placed in the world, because it is in the 'disabled-worlds' of the config.yml
+     * or of the config of this type. The names are not case-sensitive. Minions that are already there are not affected.
+     */
+    fun isWorldDisabled(world: String): Boolean {
+        return com.artillexstudios.axminions.api.config.Config.DISABLED_WORLDS().any { it.equals(world, true) } ||
+            config.getStringList("disabled-worlds", emptyList()).any { it.equals(world, true) }
+    }
+
     open fun onToolDirty(minion: Minion) {
 
     }
@@ -108,6 +117,15 @@ abstract class MinionType(private val name: String, private val defaults: InputS
 
     fun getLong(key: String, level: Int): Long {
         return get(key, level, 0, Long::class.java)!!
+    }
+
+    /**
+     * How many containers a minion of this type can be linked to at the level, 'containers' in the upgrades.
+     * Like the other upgrade values, a level keeps the value of the closest lower level that has one.
+     * Minions can always have one, which is also what a type without the setting gets.
+     */
+    fun getContainers(level: Int): Int {
+        return getLong("containers", level).toInt().coerceAtLeast(1)
     }
 
     fun getSection(key: String, level: Int): Section? {

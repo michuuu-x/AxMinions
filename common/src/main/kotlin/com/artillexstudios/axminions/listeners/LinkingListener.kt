@@ -7,6 +7,7 @@ import com.artillexstudios.axminions.api.config.Messages
 import com.artillexstudios.axminions.api.events.MinionChestLinkEvent
 import com.artillexstudios.axminions.api.events.PreMinionDamageEntityEvent
 import com.artillexstudios.axminions.api.minions.Minion
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.Bukkit
 import java.util.WeakHashMap
 import org.bukkit.Material
@@ -56,8 +57,33 @@ class LinkingListener : Listener {
             return
         }
 
-        event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_SUCCESS()))
-        minion.setLinkedChest(event.clickedBlock!!.location)
+        val chest = event.clickedBlock!!.location
+        val max = minion.getMaxLinkedChests()
+        val full = minion.getLinkedChests().size >= max
+        val linked = when {
+            minion.isLinkedTo(chest) -> false
+            // A minion that can have one container swaps it, the others have to unlink one first
+            full && max == 1 -> {
+                minion.setLinkedChest(chest)
+                true
+            }
+            full -> false
+            else -> minion.addLinkedChest(chest)
+        }
+
+        if (linked) {
+            event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_SUCCESS()))
+        } else if (full && !minion.isLinkedTo(chest)) {
+            event.player.sendMessage(
+                StringUtils.formatToString(
+                    Messages.PREFIX() + Messages.LINK_MAX_REACHED(),
+                    Placeholder.unparsed("max", max.toString()),
+                    Placeholder.unparsed("level", minion.getLevel().toString())
+                )
+            )
+        } else {
+            event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_ALREADY_LINKED()))
+        }
 
         // The menu was closed to start linking, bring it back so the player doesn't have to click the minion again
         minion.openInventory(event.player)

@@ -1,6 +1,9 @@
 package com.artillexstudios.axminions.commands
 
+import com.artillexstudios.axapi.utils.StringUtils
 import com.artillexstudios.axminions.AxMinionsPlugin
+import com.artillexstudios.axminions.api.config.Messages
+import com.artillexstudios.axminions.api.warnings.OwnerAlerts
 import org.bukkit.entity.Player
 import revxrsal.commands.annotation.Command
 import revxrsal.commands.annotation.Description
@@ -32,5 +35,13 @@ class MinionsCommand {
     @Description("Open the list of the players who can use your minions")
     fun users(player: Player) {
         AxMinionsPlugin.users.open(player)
+    }
+
+    @Subcommand("alerts")
+    @CommandPermission("axminions.command.alerts")
+    @Description("Turn the messages about your minions that stopped working on or off")
+    fun alerts(player: Player) {
+        val enabled = OwnerAlerts.toggle(player)
+        player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + if (enabled) Messages.ALERTS_ON() else Messages.ALERTS_OFF()))
     }
 }

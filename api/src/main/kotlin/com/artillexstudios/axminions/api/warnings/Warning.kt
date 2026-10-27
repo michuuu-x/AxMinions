@@ -19,6 +19,9 @@ abstract class Warning(private val name: String) {
     abstract fun getContent(): String
 
     fun display(minion: Minion) {
+        // The owner is told even if the holograms are turned off
+        OwnerAlerts.alert(minion, this)
+
         if (!Config.DISPLAY_WARNINGS()) return
 
         if (minion.getWarning() == null) {

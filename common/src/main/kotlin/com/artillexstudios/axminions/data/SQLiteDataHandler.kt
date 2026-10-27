@@ -43,7 +43,7 @@ class SQLiteDataHandler : DataHandler {
                 statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_users`(`uuid` VARCHAR(36) PRIMARY KEY, `name` VARCHAR(16), `island_slots` INT DEFAULT 0);")
                 statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_worlds`(`id` INTEGER PRIMARY KEY, `name` VARCHAR(64) UNIQUE);")
                 statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_locations`(`id` INTEGER PRIMARY KEY AUTOINCREMENT, `x` INT, `y` INT, `z` INT, `world_id` INT, UNIQUE(`x`, `y`, `z`, `world_id`), FOREIGN KEY(`world_id`) REFERENCES `axminions_worlds`(`id`));")
-                statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_minions`(`id` INTEGER PRIMARY KEY, `location_id` INT UNIQUE, `chest_location_id` INT, `owner_id` VARCHAR(36), `type_id` INT, `direction` TINYINT, `level` SMALLINT, `storage` DOUBLE, `actions` BIGINT, `tool` TEXT, `charge` BIGINT DEFAULT 0, `working` TINYINT DEFAULT 1, FOREIGN KEY(`location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`chest_location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`owner_id`) REFERENCES `axminions_users`(`uuid`), FOREIGN KEY(`type_id`) REFERENCES `axminions_types`(`id`));")
+                statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_minions`(`id` INTEGER PRIMARY KEY, `location_id` INT UNIQUE, `chest_location_id` INT, `owner_id` VARCHAR(36), `type_id` INT, `direction` TINYINT, `level` SMALLINT, `storage` DOUBLE, `actions` BIGINT, `tool` TEXT, `charge` BIGINT DEFAULT 0, `working` TINYINT DEFAULT 1, `extra_chests` TEXT, FOREIGN KEY(`location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`chest_location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`owner_id`) REFERENCES `axminions_users`(`uuid`), FOREIGN KEY(`type_id`) REFERENCES `axminions_types`(`id`));")
                 // SQLite can't add a column conditionally, so check what the table already has
                 val columns = HashSet<String>()
                 statement.executeQuery("PRAGMA table_info(`axminions_minions`);").use { resultSet ->
@@ -53,6 +53,9 @@ class SQLiteDataHandler : DataHandler {
                 }
                 if ("working" !in columns) {
                     statement.executeUpdate("ALTER TABLE `axminions_minions` ADD COLUMN `working` TINYINT DEFAULT 1;")
+                }
+                if ("extra_chests" !in columns) {
+                    statement.executeUpdate("ALTER TABLE `axminions_minions` ADD COLUMN `extra_chests` TEXT;")
                 }
                 statement.executeUpdate("CREATE INDEX IF NOT EXISTS `axminions_minions_owner` ON `axminions_minions`(`owner_id`);")
                 statement.executeUpdate("CREATE INDEX IF NOT EXISTS `axminions_minions_chest` ON `axminions_minions`(`chest_location_id`);")
@@ -111,6 +114,7 @@ class SQLiteDataHandler : DataHandler {
                                 resultSet.getInt("chest_z").toDouble()
                             )
                         }
+                        val extraChests = ChestLocations.deserialize(resultSet.getString("extra_chests"))
 
                         var itemStack = ItemStack(Material.AIR)
                         if (tool != null) {
@@ -132,7 +136,8 @@ class SQLiteDataHandler : DataHandler {
                                 locationId,
                                 chestLocationId,
                                 charge,
-                                working
+                                working,
+                                extraChests
                             )
                         }
                     }
@@ -230,7 +235,7 @@ class SQLiteDataHandler : DataHandler {
                 statement.executeUpdate()
             }
 
-            connection.prepareStatement("INSERT INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`) VALUES(?, ?, ?, (SELECT `id` FROM `axminions_types` WHERE `name` = ?), ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(`location_id`) DO UPDATE SET `chest_location_id` = excluded.`chest_location_id`, `owner_id` = excluded.`owner_id`, `type_id` = excluded.`type_id`, `direction` = excluded.`direction`, `level` = excluded.`level`, `storage` = excluded.`storage`, `actions` = excluded.`actions`, `tool` = excluded.`tool`, `charge` = excluded.`charge`, `working` = excluded.`working`;")
+            connection.prepareStatement("INSERT INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`, `extra_chests`) VALUES(?, ?, ?, (SELECT `id` FROM `axminions_types` WHERE `name` = ?), ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(`location_id`) DO UPDATE SET `chest_location_id` = excluded.`chest_location_id`, `owner_id` = excluded.`owner_id`, `type_id` = excluded.`type_id`, `direction` = excluded.`direction`, `level` = excluded.`level`, `storage` = excluded.`storage`, `actions` = excluded.`actions`, `tool` = excluded.`tool`, `charge` = excluded.`charge`, `working` = excluded.`working`, `extra_chests` = excluded.`extra_chests`;")
                 .use { statement ->
                     statement.setInt(1, locationId)
                     if (linkedChestId == null) {
@@ -251,6 +256,8 @@ class SQLiteDataHandler : DataHandler {
                     }
                     statement.setLong(10, minion.getCharge())
                     statement.setInt(11, if (minion.isWorking()) 1 else 0)
+                    // The first container has its own column
+                    statement.setString(12, ChestLocations.serialize(minion.getLinkedChests().drop(1)))
                     statement.executeUpdate()
                 }
         }
@@ -302,6 +309,38 @@ class SQLiteDataHandler : DataHandler {
         }
 
         return 0
+    }
+
+    override fun getMinionAmount(uuid: UUID, type: String): Int {
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT COUNT(*) FROM `axminions_minions` WHERE `owner_id` = ? AND `type_id` = (SELECT `id` FROM `axminions_types` WHERE `name` = ?);").use { statement ->
+                statement.setString(1, uuid.toString())
+                statement.setString(2, type)
+                statement.executeQuery().use { resultSet ->
+                    if (resultSet.next()) {
+                        return resultSet.getInt(1)
+                    }
+                }
+            }
+        }
+
+        return 0
+    }
+
+    override fun getMinionAmounts(uuid: UUID): Map<String, Int> {
+        val amounts = HashMap<String, Int>()
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT `types`.`name`, COUNT(*) FROM `axminions_minions` AS `minions` JOIN `axminions_types` AS `types` ON `minions`.`type_id` = `types`.`id` WHERE `minions`.`owner_id` = ? GROUP BY `types`.`name`;").use { statement ->
+                statement.setString(1, uuid.toString())
+                statement.executeQuery().use { resultSet ->
+                    while (resultSet.next()) {
+                        amounts[resultSet.getString(1)] = resultSet.getInt(2)
+                    }
+                }
+            }
+        }
+
+        return amounts
     }
 
     override fun isMinion(location: Location): Boolean {

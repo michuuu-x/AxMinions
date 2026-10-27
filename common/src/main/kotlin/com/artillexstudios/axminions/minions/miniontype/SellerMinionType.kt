@@ -3,18 +3,18 @@ package com.artillexstudios.axminions.minions.miniontype
 import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
-import com.artillexstudios.axminions.api.utils.MinionUtils
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.utils.Enchantments
+import com.artillexstudios.axminions.utils.MaterialList
 import kotlin.math.roundToInt
 import org.bukkit.Material
 import org.bukkit.block.Container
-import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 
 class SellerMinionType : MinionType("seller", AxMinionsPlugin.INSTANCE.getResource("minions/seller.yml")!!) {
+    private val neverSell = MaterialList("never-sell")
 
     override fun shouldRun(minion: Minion): Boolean {
         return MinionTicker.getTick() % minion.getNextAction() == 0L
@@ -29,33 +29,14 @@ class SellerMinionType : MinionType("seller", AxMinionsPlugin.INSTANCE.getResour
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedInventory() != null && !MinionUtils.isFull(minion.getLinkedInventory()!!)) {
+        if (minion.hasContainerSpace()) {
             Warnings.remove(minion, Warnings.CONTAINER_FULL)
         }
 
-        if (minion.getLinkedChest() == null) {
+        minion.validateLinkedChests()
+        val inventories = minion.getLinkedInventories()
+        if (inventories.isEmpty()) {
             Warnings.NO_CONTAINER.display(minion)
-            return
-        }
-
-        val type = minion.getLinkedChest()!!.block.type
-        if (type == Material.CHEST && minion.getLinkedInventory() !is DoubleChestInventory && hasChestOnSide(minion.getLinkedChest()!!.block)) {
-            minion.setLinkedChest(minion.getLinkedChest())
-        }
-
-        if (type == Material.CHEST && minion.getLinkedInventory() is DoubleChestInventory && !hasChestOnSide(minion.getLinkedChest()!!.block)) {
-            minion.setLinkedChest(minion.getLinkedChest())
-        }
-
-        if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.BARREL) {
-            Warnings.NO_CONTAINER.display(minion)
-            minion.setLinkedChest(null)
-            return
-        }
-
-        if (minion.getLinkedInventory() == null) {
-            Warnings.NO_CONTAINER.display(minion)
-            minion.setLinkedChest(null)
             return
         }
 
@@ -72,23 +53,33 @@ class SellerMinionType : MinionType("seller", AxMinionsPlugin.INSTANCE.getResour
             return
         }
 
-        for (it in minion.getLinkedInventory()!!.contents) {
-            if (it == null || it.type == Material.AIR) {
-                continue
-            }
+        val kept = neverSell.get(this)
 
-            if (sellContainerContents(minion, it)) {
-                continue
-            }
+        // Every linked container is sold from
+        for (inventory in inventories) {
+            for (it in inventory.contents) {
+                if (it == null || it.type == Material.AIR) {
+                    continue
+                }
 
-            if (sellItemStack(minion, it)) {
-                it.amount = 0
+                // Left alone completely, also when it is a container
+                if (it.type in kept) {
+                    continue
+                }
+
+                if (sellContainerContents(minion, it, kept)) {
+                    continue
+                }
+
+                if (sellItemStack(minion, it)) {
+                    it.amount = 0
+                }
             }
         }
     }
 
     // Sells the contents of an item that holds an inventory (shulker box etc.), returns true if the item is a container
-    private fun sellContainerContents(minion: Minion, it: ItemStack): Boolean {
+    private fun sellContainerContents(minion: Minion, it: ItemStack, kept: Set<Material>): Boolean {
         if (!it.hasItemMeta()) {
             return false
         }
@@ -108,6 +99,11 @@ class SellerMinionType : MinionType("seller", AxMinionsPlugin.INSTANCE.getResour
         var changed = false
         for ((slot, stack) in inventory.contents.withIndex()) {
             if (stack == null || stack.type == Material.AIR) {
+                continue
+            }
+
+            if (stack.type in kept) {
+                stacks[slot] = stack
                 continue
             }
 

@@ -25,6 +25,12 @@ interface AxMinionsAPI {
 
     fun getMinionLimit(player: Player): Int
 
+    /**
+     * Returns how many minions of the type with the given name the player can have, set with the
+     * axminions.limit.<type>.<amount> permission. Null means there is no limit for the type, only the total one.
+     */
+    fun getTypeLimit(player: Player, type: String): Int?
+
     fun getIntegrations(): Integrations
 
     fun getTick(): Long

@@ -12,7 +12,6 @@ import com.artillexstudios.axminions.utils.Enchantments
 import kotlin.math.roundToInt
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
-import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.inventory.ItemStack
 
 class LumberMinionType : MinionType("lumber", AxMinionsPlugin.INSTANCE.getResource("minions/lumber.yml")!!) {
@@ -30,31 +29,18 @@ class LumberMinionType : MinionType("lumber", AxMinionsPlugin.INSTANCE.getResour
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedInventory() != null && !MinionUtils.isFull(minion.getLinkedInventory()!!)) {
+        if (minion.hasContainerSpace()) {
             Warnings.remove(minion, Warnings.CONTAINER_FULL)
         }
 
-        if (minion.getLinkedChest() != null) {
-            val type = minion.getLinkedChest()!!.block.type
-            if (type == Material.CHEST && minion.getLinkedInventory() !is DoubleChestInventory && hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
-
-            if (type == Material.CHEST && minion.getLinkedInventory() is DoubleChestInventory && !hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
-
-            if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.BARREL) {
-                minion.setLinkedChest(null)
-            }
-        }
+        minion.validateLinkedChests()
 
         if (!minion.canUseTool()) {
             Warnings.NO_TOOL.display(minion)
             return
         }
 
-        if (minion.getLinkedInventory()?.let { MinionUtils.isFull(it) } == true) {
+        if (minion.areContainersFull()) {
             Warnings.CONTAINER_FULL.display(minion)
             return
         }

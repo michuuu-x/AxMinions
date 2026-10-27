@@ -10,16 +10,28 @@ import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.utils.Enchantments
+import com.artillexstudios.axminions.utils.MaterialList
 import dev.lone.itemsadder.api.CustomBlock
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import kotlin.math.roundToInt
 import org.bukkit.Material
 import org.bukkit.block.data.Ageable
-import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.inventory.ItemStack
 
 class FarmerMinionType : MinionType("farmer", AxMinionsPlugin.INSTANCE.getResource("minions/farmer.yml")!!, true) {
+    // The crops can be written as the item (carrot) or as the block (carrots)
+    private val crops = MaterialList(
+        "crops",
+        mapOf(
+            "CARROT" to "CARROTS",
+            "POTATO" to "POTATOES",
+            "BEETROOT" to "BEETROOTS",
+            "COCOA_BEANS" to "COCOA",
+            "SWEET_BERRIES" to "SWEET_BERRY_BUSH",
+            "PITCHER_POD" to "PITCHER_CROP"
+        )
+    )
 
     override fun shouldRun(minion: Minion): Boolean {
         return MinionTicker.getTick() % minion.getNextAction() == 0L
@@ -34,26 +46,13 @@ class FarmerMinionType : MinionType("farmer", AxMinionsPlugin.INSTANCE.getResour
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedInventory() != null && !MinionUtils.isFull(minion.getLinkedInventory()!!)) {
+        if (minion.hasContainerSpace()) {
             Warnings.remove(minion, Warnings.CONTAINER_FULL)
         }
 
-        if (minion.getLinkedChest() != null) {
-            val type = minion.getLinkedChest()!!.block.type
-            if (type == Material.CHEST && minion.getLinkedInventory() !is DoubleChestInventory && hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
+        minion.validateLinkedChests()
 
-            if (type == Material.CHEST && minion.getLinkedInventory() is DoubleChestInventory && !hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
-
-            if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.BARREL) {
-                minion.setLinkedChest(null)
-            }
-        }
-
-        if (minion.getLinkedInventory()?.let { MinionUtils.isFull(it) } == true) {
+        if (minion.areContainersFull()) {
             Warnings.CONTAINER_FULL.display(minion)
             return
         }
@@ -81,12 +80,17 @@ class FarmerMinionType : MinionType("farmer", AxMinionsPlugin.INSTANCE.getResour
             else -> LocationUtils.getAllBlocksInRadius(minion.getLocation(), minion.getRange(), false)
         }
 
+        // If the list is empty, every crop is harvested
+        val allowed = crops.get(this)
+
         blocks.fastFor { location ->
             val block = location.block
 
             if (AxMinionsPlugin.integrations.itemsAdderIntegration) {
                 val customBlock = CustomBlock.byAlreadyPlaced(block)
                 if (customBlock !== null) {
+                    // The custom blocks can't be named in the list, so they are left alone when there is one
+                    if (allowed.isNotEmpty()) return@fastFor
                     val preHarvestEvent = PreFarmerMinionHarvestEvent(minion, block)
                     Bukkit.getPluginManager().callEvent(preHarvestEvent)
                     if (preHarvestEvent.isCancelled) return@fastFor
@@ -97,6 +101,8 @@ class FarmerMinionType : MinionType("farmer", AxMinionsPlugin.INSTANCE.getResour
                     return@fastFor
                 }
             }
+
+            if (allowed.isNotEmpty() && block.type !in allowed) return@fastFor
 
             when (block.type) {
                 Material.CACTUS, Material.SUGAR_CANE, Material.BAMBOO -> {

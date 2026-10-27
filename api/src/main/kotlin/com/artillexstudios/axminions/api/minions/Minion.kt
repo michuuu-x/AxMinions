@@ -76,9 +76,63 @@ interface Minion : InventoryHolder {
 
     fun animate()
 
+    /**
+     * Links the minion to this one container only, any other container it was linked to is unlinked.
+     * Use [addLinkedChest] to keep the others.
+     */
     fun setLinkedChest(location: Location?)
 
+    /**
+     * The first container the minion is linked to, which is the one that gets filled first.
+     */
     fun getLinkedChest(): Location?
+
+    /**
+     * Every container the minion is linked to, in the order they get filled.
+     */
+    fun getLinkedChests(): List<Location>
+
+    /**
+     * The inventories of the linked containers that are loaded, in the order they get filled.
+     */
+    fun getLinkedInventories(): List<Inventory>
+
+    /**
+     * How many containers the minion can be linked to at its level, 'containers' in the upgrades of its type.
+     */
+    fun getMaxLinkedChests(): Int
+
+    /**
+     * Whether the minion is linked to the container at the location.
+     */
+    fun isLinkedTo(location: Location): Boolean
+
+    /**
+     * Links one more container, which gets filled when the ones before it are full.
+     * Returns false if the minion can't be linked to more containers or is linked to this one already.
+     */
+    fun addLinkedChest(location: Location): Boolean
+
+    /**
+     * Unlinks the container at the location, returns false if the minion wasn't linked to it.
+     */
+    fun removeLinkedChest(location: Location): Boolean
+
+    /**
+     * Whether at least one of the linked containers has room left, false if there is none.
+     */
+    fun hasContainerSpace(): Boolean
+
+    /**
+     * Whether the minion is linked and every one of its containers is full.
+     */
+    fun areContainersFull(): Boolean
+
+    /**
+     * Unlinks the containers that aren't containers anymore, and loads the inventories again of the chests that
+     * became a double chest or stopped being one. To be called by the minion types before they use the containers.
+     */
+    fun validateLinkedChests()
 
     fun setDirection(direction: Direction, save: Boolean = true)
 
@@ -86,10 +140,21 @@ interface Minion : InventoryHolder {
 
     fun remove()
 
+    /**
+     * The inventory of the first linked container, see [getLinkedInventories] for all of them.
+     */
     fun getLinkedInventory(): Inventory?
 
+    /**
+     * Puts the item into the linked containers, one after the other when the ones before are full.
+     * What doesn't fit anywhere is dropped at the minion.
+     */
     fun addToContainerOrDrop(itemStack: ItemStack)
 
+    /**
+     * Puts the item into the linked containers, one after the other when the ones before are full.
+     * Returns what didn't fit anywhere, or null if the minion has no loaded container.
+     */
     fun addWithRemaining(itemStack: ItemStack): HashMap<Int, ItemStack>?
 
     fun addToContainerOrDrop(itemStack: Iterable<ItemStack>)

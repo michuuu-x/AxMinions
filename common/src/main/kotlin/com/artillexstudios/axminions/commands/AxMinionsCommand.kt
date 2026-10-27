@@ -14,6 +14,7 @@ import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.converter.LitMinionsConverter
 import com.artillexstudios.axminions.integrations.island.SuperiorSkyBlock2Integration
 import com.artillexstudios.axminions.minions.Minions
+import com.artillexstudios.axminions.utils.PlayerStats
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.Chunk
@@ -166,6 +167,8 @@ class AxMinionsCommand {
             val original = AxMinionsPlugin.dataHandler.getExtraSlots(offlinePlayer.uniqueId)
             AxMinionsPlugin.dataHandler.addUser(offlinePlayer.uniqueId, offlinePlayer.name ?: "---")
             AxMinionsPlugin.dataHandler.addExtraSlot(offlinePlayer.uniqueId, amount)
+            PlayerStats.invalidate(offlinePlayer.uniqueId)
+            PlayerStats.invalidateIslands()
             commandSender.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.SLOT_GIVE(), Placeholder.unparsed("player", offlinePlayer.name ?: "???"), Placeholder.unparsed("amount", amount.toString())))
             offlinePlayer.player?.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.SLOT_RECEIVE(), Placeholder.unparsed("amount", amount.toString()), Placeholder.unparsed("from", original.toString()), Placeholder.unparsed("to", (original + amount).toString())))
         }

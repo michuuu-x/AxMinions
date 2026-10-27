@@ -23,10 +23,6 @@ class LinkedChestListener : Listener {
     }
 
     private fun isLinked(block: Block): Boolean {
-        return Minions.getMinions().any {
-            val chest = it.getLinkedChest() ?: return@any false
-
-            chest.world == block.world && chest.blockX == block.x && chest.blockY == block.y && chest.blockZ == block.z
-        }
+        return Minions.getMinions().any { it.isLinkedTo(block.location) }
     }
 }

@@ -3,17 +3,18 @@ package com.artillexstudios.axminions.minions.miniontype
 import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
-import com.artillexstudios.axminions.api.utils.MinionUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.nms.NMSHandler
 import kotlin.math.roundToInt
-import org.bukkit.Material
+import org.bukkit.entity.Ageable
 import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Piglin
 import org.bukkit.entity.Player
 import org.bukkit.entity.Tameable
-import org.bukkit.inventory.DoubleChestInventory
+import org.bukkit.entity.Zoglin
+import org.bukkit.entity.Zombie
 
 class SlayerMinionType : MinionType("slayer", AxMinionsPlugin.INSTANCE.getResource("minions/slayer.yml")!!) {
 
@@ -31,31 +32,18 @@ class SlayerMinionType : MinionType("slayer", AxMinionsPlugin.INSTANCE.getResour
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedInventory() != null && !MinionUtils.isFull(minion.getLinkedInventory()!!)) {
+        if (minion.hasContainerSpace()) {
             Warnings.remove(minion, Warnings.CONTAINER_FULL)
         }
 
-        if (minion.getLinkedChest() != null) {
-            val type = minion.getLinkedChest()!!.block.type
-            if (type == Material.CHEST && minion.getLinkedInventory() !is DoubleChestInventory && hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
-
-            if (type == Material.CHEST && minion.getLinkedInventory() is DoubleChestInventory && !hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
-
-            if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.BARREL) {
-                minion.setLinkedChest(null)
-            }
-        }
+        minion.validateLinkedChests()
 
         if (!minion.canUseTool()) {
             Warnings.NO_TOOL.display(minion)
             return
         }
 
-        if (minion.getLinkedInventory()?.let { MinionUtils.isFull(it) } == true) {
+        if (minion.areContainersFull()) {
             Warnings.CONTAINER_FULL.display(minion)
             return
         }
@@ -82,8 +70,23 @@ class SlayerMinionType : MinionType("slayer", AxMinionsPlugin.INSTANCE.getResour
                 return@fastFor
             }
 
+            if (!getConfig().getBoolean("damage-baby", true) && isBaby(it)) {
+                return@fastFor
+            }
+
             NMSHandler.get().attack(minion, it)
             minion.damageTool()
+        }
+    }
+
+    // The hostile mobs that can be babies don't all share an interface with the animals
+    private fun isBaby(entity: LivingEntity): Boolean {
+        return when (entity) {
+            is Ageable -> !entity.isAdult
+            is Zombie -> entity.isBaby
+            is Piglin -> entity.isBaby
+            is Zoglin -> entity.isBaby
+            else -> false
         }
     }
 }

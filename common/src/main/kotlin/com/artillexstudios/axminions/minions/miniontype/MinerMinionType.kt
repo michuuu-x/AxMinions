@@ -17,7 +17,6 @@ import dev.lone.itemsadder.api.CustomBlock
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
-import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.inventory.FurnaceRecipe
 import org.bukkit.inventory.ItemStack
 import java.util.*
@@ -75,31 +74,18 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
     }
 
     override fun run(minion: Minion) {
-        if (minion.getLinkedInventory() != null && !MinionUtils.isFull(minion.getLinkedInventory()!!)) {
+        if (minion.hasContainerSpace()) {
             Warnings.remove(minion, Warnings.CONTAINER_FULL)
         }
 
-        if (minion.getLinkedChest() != null && minion.getLinkedInventory() != null) {
-            val type = minion.getLinkedChest()!!.block.type
-            if (type == Material.CHEST && minion.getLinkedInventory() !is DoubleChestInventory && hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
-
-            if (type == Material.CHEST && minion.getLinkedInventory() is DoubleChestInventory && !hasChestOnSide(minion.getLinkedChest()!!.block)) {
-                minion.setLinkedChest(minion.getLinkedChest())
-            }
-
-            if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.BARREL) {
-                minion.setLinkedChest(null)
-            }
-        }
+        minion.validateLinkedChests()
 
         if (!minion.canUseTool()) {
             Warnings.NO_TOOL.display(minion)
             return
         }
 
-        if (minion.getLinkedInventory()?.let { MinionUtils.isFull(it) } == true) {
+        if (minion.areContainersFull()) {
             Warnings.CONTAINER_FULL.display(minion)
             return
         }

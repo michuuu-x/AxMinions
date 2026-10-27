@@ -28,14 +28,18 @@ import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.api.utils.NumberFormatUtils
+import com.artillexstudios.axminions.api.utils.MinionUtils
 import com.artillexstudios.axminions.api.utils.TimeUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.hologram.HologramStyler
+import com.artillexstudios.axminions.api.warnings.OwnerAlerts
 import com.artillexstudios.axminions.api.warnings.Warning
 import com.artillexstudios.axminions.api.warnings.Warnings
 import com.artillexstudios.axminions.listeners.LinkingListener
 import com.artillexstudios.axminions.utils.Enchantments
+import com.artillexstudios.axminions.utils.PlayerStats
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
@@ -44,6 +48,7 @@ import org.bukkit.block.Container
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.entity.Pose
+import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.Damageable
@@ -51,7 +56,9 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.EulerAngle
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 
 class Minion(
     private var location: Location,
@@ -60,7 +67,7 @@ class Minion(
     private val type: MinionType,
     private var level: Int,
     private var tool: ItemStack?,
-    private var linkedChest: Location?,
+    linkedChest: Location?,
     private var direction: Direction,
     private var actions: Long,
     private var storage: Double,
@@ -68,7 +75,9 @@ class Minion(
     private var chestLocationId: Int,
     private var charge: Long,
     // A stopped minion does nothing, the owner can start it again in the menu
-    @Volatile private var working: Boolean = true
+    @Volatile private var working: Boolean = true,
+    // The containers after the first one, which is filled when the ones before it are full
+    extraChests: List<Location> = emptyList()
 ) : Minion {
     companion object {
         private val equipmentSlots: Array<EquipmentSlot> = arrayOf(
@@ -105,7 +114,14 @@ class Minion(
     private val statusHologramViewers = HashSet<UUID>()
     private val warningHologramViewers = HashSet<UUID>()
     private val extraData = hashMapOf<String, String>()
-    private var linkedInventory: Inventory? = null
+    // A linked container with its inventory, which is only there while the chunk of the container is loaded
+    private class LinkedContainer(val location: Location) {
+        @Volatile
+        var inventory: Inventory? = null
+    }
+
+    // In the order they get filled, the first one is saved apart from the others
+    private val containers = CopyOnWriteArrayList<LinkedContainer>()
     internal val openInventories = mutableListOf<Inventory>()
     private var toolMeta: ItemMeta? = null
 
@@ -117,6 +133,8 @@ class Minion(
     private var unbreakable = false
 
     init {
+        linkedChest?.let { containers.add(LinkedContainer(it.clone())) }
+        extraChests.forEach { containers.add(LinkedContainer(it.clone())) }
         spawn()
         Minions.load(this)
     }
@@ -160,7 +178,10 @@ class Minion(
                 )
 
                 if (pickup) {
-                    if (event.player.inventory.firstEmpty() == -1) {
+                    if (!event.player.hasPermission("axminions.use.pickup")) {
+                        broken.set(false)
+                        event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_NO_PERMISSION()))
+                    } else if (event.player.inventory.firstEmpty() == -1) {
                         broken.set(false)
                     } else {
                         if (ownerUUID == event.player.uniqueId) {
@@ -432,6 +453,11 @@ class Minion(
                         this.level + 1
                     ).toString()
                 )
+                val containers = Placeholder.parsed("containers", getMaxLinkedChests().toString())
+                val nextContainers = Placeholder.parsed(
+                    "next_containers",
+                    if (type.hasReachedMaxLevel(this)) Messages.UPGRADES_MAX_LEVEL_REACHED() else type.getContainers(this.level + 1).toString()
+                )
 
                 item = ItemBuilder.create(
                     type.getConfig().getSection("gui.$it"),
@@ -453,7 +479,9 @@ class Minion(
                     chanceKillStackedAmount,
                     nextChanceKillStackedAmount,
                     stackedAmount,
-                    nextStackedAmount
+                    nextStackedAmount,
+                    containers,
+                    nextContainers
                 ).get()
 
                 val meta = item.itemMeta!!
@@ -488,19 +516,24 @@ class Minion(
                     item = null
                 }
             } else {
-                val rotation = Placeholder.unparsed("direction", Messages.ROTATION_NAME(direction))
-                val linked = Placeholder.unparsed(
-                    "linked", when (linkedChest) {
-                        null -> "---"
-                        else -> Messages.LOCATION_FORMAT().replace("<world>", linkedChest?.world!!.name)
-                            .replace("<x>", linkedChest?.blockX.toString()).replace("<y>", linkedChest?.blockY.toString())
-                            .replace("<z>", linkedChest?.blockZ.toString())
-                    }
+                val chests = getLinkedChests()
+                val resolvers = arrayListOf<TagResolver>(
+                    Placeholder.unparsed("direction", Messages.ROTATION_NAME(direction)),
+                    // The container that Right-click unlinks, which is the only one for a minion that can have one
+                    Placeholder.unparsed("linked", chests.lastOrNull()?.let { chest -> formatLocation(chest) } ?: "---"),
+                    Placeholder.unparsed("linked_count", chests.size.toString()),
+                    Placeholder.unparsed("max_containers", getMaxLinkedChests().toString())
                 )
+                // <linked_1>, <linked_2>... for a lore that lists every container, "---" for the ones that aren't linked
+                for (index in 1..maxOf(10, chests.size)) {
+                    resolvers.add(
+                        Placeholder.unparsed("linked_$index", chests.getOrNull(index - 1)?.let { chest -> formatLocation(chest) } ?: "---")
+                    )
+                }
+
                 item = ItemBuilder.create(
                     AxMinionsAPI.INSTANCE.getConfig().getConfig().getSection("gui.items.$it"),
-                    rotation,
-                    linked
+                    *resolvers.toTypedArray()
                 ).get()
 
                 val meta = item.itemMeta!!
@@ -674,25 +707,141 @@ class Minion(
         armTick += 0.2
     }
 
-    override fun setLinkedChest(location: Location?) {
-        this.linkedChest = location?.clone()
-        if (linkedChest != null) {
-            Scheduler.get().executeAt(linkedChest) {
-                linkedInventory = (linkedChest?.block?.state as? Container)?.inventory
+    private fun formatLocation(location: Location): String {
+        return Messages.LOCATION_FORMAT().replace("<world>", location.world?.name ?: "---")
+            .replace("<x>", location.blockX.toString()).replace("<y>", location.blockY.toString())
+            .replace("<z>", location.blockZ.toString())
+    }
 
-                updateInventories()
-            }
-        } else {
-            linkedInventory = null
-        }
+    private fun sameBlock(first: Location, second: Location): Boolean {
+        return first.world == second.world && first.blockX == second.blockX && first.blockY == second.blockY && first.blockZ == second.blockZ
+    }
 
+    // The two halves of a double chest are one inventory, so linking both would use up a second slot for nothing
+    private fun isDoubleChestPair(first: Location, second: Location): Boolean {
+        if (first.world != second.world || first.blockY != second.blockY) return false
+        if (abs(first.blockX - second.blockX) + abs(first.blockZ - second.blockZ) != 1) return false
+
+        val firstData = first.block.blockData as? org.bukkit.block.data.type.Chest ?: return false
+        val secondData = second.block.blockData as? org.bukkit.block.data.type.Chest ?: return false
+        return firstData.type != org.bukkit.block.data.type.Chest.Type.SINGLE &&
+            secondData.type != org.bukkit.block.data.type.Chest.Type.SINGLE &&
+            firstData.facing == secondData.facing
+    }
+
+    private fun saveLater() {
         AxMinionsPlugin.dataQueue.submit {
             AxMinionsPlugin.dataHandler.saveMinion(this)
         }
     }
 
+    // Reads the inventory of the container from the thread that owns its block
+    private fun loadInventory(container: LinkedContainer) {
+        Scheduler.get().executeAt(container.location) {
+            container.inventory = (container.location.block.state as? Container)?.inventory
+
+            updateInventories()
+        }
+    }
+
+    @Synchronized
+    override fun setLinkedChest(location: Location?) {
+        containers.clear()
+        if (location != null) {
+            val container = LinkedContainer(location.clone())
+            containers.add(container)
+            loadInventory(container)
+        } else {
+            updateInventories()
+        }
+
+        saveLater()
+    }
+
     override fun getLinkedChest(): Location? {
-        return this.linkedChest
+        return containers.firstOrNull()?.location
+    }
+
+    override fun getLinkedChests(): List<Location> {
+        return containers.map { it.location }
+    }
+
+    override fun getLinkedInventories(): List<Inventory> {
+        return containers.mapNotNull { it.inventory }
+    }
+
+    override fun getMaxLinkedChests(): Int {
+        return type.getContainers(level)
+    }
+
+    override fun isLinkedTo(location: Location): Boolean {
+        return containers.any { sameBlock(it.location, location) }
+    }
+
+    @Synchronized
+    override fun addLinkedChest(location: Location): Boolean {
+        if (containers.size >= getMaxLinkedChests()) return false
+        if (containers.any { sameBlock(it.location, location) || isDoubleChestPair(it.location, location) }) return false
+
+        val container = LinkedContainer(location.clone())
+        containers.add(container)
+        loadInventory(container)
+        saveLater()
+        return true
+    }
+
+    @Synchronized
+    override fun removeLinkedChest(location: Location): Boolean {
+        if (!containers.removeIf { sameBlock(it.location, location) }) return false
+
+        updateInventories()
+        saveLater()
+        return true
+    }
+
+    override fun hasContainerSpace(): Boolean {
+        for (container in containers) {
+            val inventory = container.inventory ?: continue
+            if (!MinionUtils.isFull(inventory)) return true
+        }
+
+        return false
+    }
+
+    override fun areContainersFull(): Boolean {
+        var linked = false
+        for (container in containers) {
+            val inventory = container.inventory ?: continue
+            if (!MinionUtils.isFull(inventory)) return false
+
+            linked = true
+        }
+
+        return linked
+    }
+
+    override fun validateLinkedChests() {
+        for (container in containers) {
+            val block = container.location.block
+            val blockType = block.type
+            if (blockType != Material.CHEST && blockType != Material.TRAPPED_CHEST && blockType != Material.BARREL) {
+                removeLinkedChest(container.location)
+                continue
+            }
+
+            val inventory = container.inventory
+            if (inventory == null) {
+                loadInventory(container)
+                continue
+            }
+
+            if (blockType == Material.CHEST) {
+                val chestOnSide = type.hasChestOnSide(block)
+                if ((inventory !is DoubleChestInventory && chestOnSide) || (inventory is DoubleChestInventory && !chestOnSide)) {
+                    loadInventory(container)
+                }
+            }
+        }
     }
 
     override fun setDirection(direction: Direction, save: Boolean) {
@@ -713,6 +862,7 @@ class Minion(
 
     override fun remove() {
         Warnings.remove(this, warning ?: Warnings.NO_CONTAINER)
+        OwnerAlerts.forget(this)
         nameHologram?.remove()
         statusHologram?.remove()
         Minions.remove(this)
@@ -720,39 +870,46 @@ class Minion(
 
         AxMinionsPlugin.dataQueue.submit {
             AxMinionsPlugin.dataHandler.deleteMinion(this)
+            PlayerStats.invalidate(ownerUUID)
 
             if (AxMinionsAPI.INSTANCE.getIntegrations().getIslandIntegration() != null) {
                 val islandId = AxMinionsAPI.INSTANCE.getIntegrations().getIslandIntegration()!!.getIslandAt(location)
                 if (islandId.isNotBlank()) {
                     AxMinionsPlugin.dataHandler.islandBreak(islandId)
+                    PlayerStats.invalidateIsland(islandId)
                 }
             }
         }
     }
 
     override fun getLinkedInventory(): Inventory? {
-        return linkedInventory
+        return containers.firstOrNull()?.inventory
     }
 
     override fun addToContainerOrDrop(itemStack: ItemStack) {
-        if (linkedInventory == null) {
+        val remaining = addWithRemaining(itemStack)
+        if (remaining == null) {
             AxMinionsPlugin.integrations.getStackerIntegration().dropItemAt(itemStack, itemStack.amount, location)
             return
         }
 
-        val remaining = linkedInventory?.addItem(itemStack)
-
-        remaining?.fastFor { _, u ->
+        remaining.fastFor { _, u ->
             AxMinionsPlugin.integrations.getStackerIntegration().dropItemAt(u, u.amount, location)
         }
     }
 
     override fun addWithRemaining(itemStack: ItemStack): HashMap<Int, ItemStack>? {
-        if (linkedInventory == null) {
-            return null
+        var remaining: HashMap<Int, ItemStack>? = null
+        var item = itemStack
+        for (container in containers) {
+            val inventory = container.inventory ?: continue
+
+            // What did not fit into this container goes to the next one
+            remaining = inventory.addItem(item)
+            item = remaining.values.firstOrNull() ?: return remaining
         }
 
-        return linkedInventory?.addItem(itemStack)
+        return remaining
     }
 
     override fun addToContainerOrDrop(itemStack: Iterable<ItemStack>) {
@@ -804,16 +961,19 @@ class Minion(
     override fun setTicking(ticking: Boolean) {
         this.ticking = ticking
 
-        if (linkedChest == null) return
+        if (containers.isEmpty()) return
 
         if (ticking) {
-            Scheduler.get().runAt(linkedChest) { a ->
-                if (linkedChest!!.world!!.isChunkLoaded(linkedChest!!.blockX shr 4, linkedChest!!.blockZ shr 4)) {
-                    linkedInventory = (linkedChest?.block?.state as? Container)?.inventory
+            for (container in containers) {
+                Scheduler.get().runAt(container.location) { _ ->
+                    val chest = container.location
+                    if (chest.world?.isChunkLoaded(chest.blockX shr 4, chest.blockZ shr 4) == true) {
+                        container.inventory = (chest.block.state as? Container)?.inventory
+                    }
                 }
             }
         } else {
-            linkedInventory = null
+            containers.forEach { it.inventory = null }
         }
     }
 
@@ -918,32 +1078,36 @@ class Minion(
     }
 
     /**
-     * Replaces the worn out [oldTool] with a usable one from the linked chest and puts the old one into the chest.
-     * Returns false (and changes nothing) if the chest has no usable replacement.
+     * Replaces the worn out [oldTool] with a usable one from the linked containers and puts the old one into them.
+     * Returns false (and changes nothing) if none of the containers has a usable replacement or room for the old tool.
      */
     private fun swapToolFromChest(oldTool: ItemStack): Boolean {
-        val inventory = linkedInventory ?: return false
+        val inventories = getLinkedInventories()
 
-        val item = pullFromChest()
-        if (item.type.isAir) return false
+        for (inventory in inventories) {
+            val item = pullFromChest(inventory)
+            if (item.type.isAir) continue
 
-        if (inventory.addItem(oldTool.clone()).isNotEmpty()) {
-            // No room for the old tool, put the replacement back
-            inventory.addItem(item)
-            return false
+            // The container the new tool came from is the first to get the old one
+            val targets = listOf(inventory) + inventories.filter { it !== inventory }
+            if (targets.none { it.addItem(oldTool.clone()).isEmpty() }) {
+                // No room for the old tool, put the replacement back
+                inventory.addItem(item)
+                return false
+            }
+
+            setTool(item)
+            return true
         }
 
-        setTool(item)
-        return true
+        return false
     }
 
-    private fun pullFromChest(): ItemStack {
+    private fun pullFromChest(inventory: Inventory): ItemStack {
         val allowedTools = arrayListOf<Material>()
         getType().getConfig().getStringList("tool.material").fastFor {
             allowedTools.add(Material.matchMaterial(it) ?: return@fastFor)
         }
-
-        val inventory = linkedInventory ?: return ItemStack(Material.AIR)
 
         // Take exactly one item from the first matching stack (Inventory#remove would wipe every identical stack)
         for (slot in 0 until inventory.size) {

@@ -24,3 +24,130 @@ softdepend:
   - PlaceholderAPI
   - ExcellentEconomy
   - PlayerPoints
+
+# Everything defaults to op, which is what the plugin did before the permissions were listed here,
+# except the axminions.use ones and axminions.command.alerts, those are true for everyone and are there to be taken away
+permissions:
+  "axminions.*":
+    description: "Open, use and pick up the minions of other players"
+    default: op
+
+  "axminions.use.upgrade":
+    description: "Upgrade a minion in its menu"
+    default: true
+  "axminions.use.link":
+    description: "Link a minion to a container, or unlink it, in its menu"
+    default: true
+  "axminions.use.charge":
+    description: "Charge a minion in its menu"
+    default: true
+  "axminions.use.pickup":
+    description: "Pick up a minion (Shift + Right Click)"
+    default: true
+
+  "axminions.command.list":
+    description: "Open the menu of your minions (/minions list)"
+    default: op
+  "axminions.command.shop":
+    description: "Open the minion shop (/minions shop)"
+    default: op
+  "axminions.command.users":
+    description: "Manage the trusted players (/minions users)"
+    default: op
+  "axminions.command.alerts":
+    description: "Turn the messages about your minions that stopped working on or off (/minions alerts)"
+    default: true
+  "axminions.command.give":
+    description: "Give a minion to a player (/axminions give)"
+    default: op
+  "axminions.command.list.others":
+    description: "See the minions of another player (/axminions list <player>)"
+    default: op
+  "axminions.command.fuel.give":
+    description: "Give a charge item to a player (/axminions fuel give)"
+    default: op
+  "axminions.command.fuel.add":
+    description: "Save the item in your hand as a charge item (/axminions fuel add)"
+    default: op
+  "axminions.command.reload":
+    description: "Reload the configurations of the plugin (/axminions reload)"
+    default: op
+  "axminions.command.convert":
+    description: "Convert the minions of another plugin (/axminions convert)"
+    default: op
+  "axminions.command.statistics":
+    description: "See the statistics of the plugin (/axminions stats)"
+    default: op
+  "axminions.command.reset":
+    description: "Remove all the minions of a player (/axminions reset)"
+    default: op
+  "axminions.command.extraslot":
+    description: "Give extra minion slots to a player (/axminions extraslot)"
+    default: op
+
+  # Only checked when place-permissions is enabled in the config.yml
+  "axminions.place.*":
+    description: "Place every type of minion"
+    default: op
+    children:
+      "axminions.place.collector": true
+      "axminions.place.crafter": true
+      "axminions.place.farmer": true
+      "axminions.place.fisher": true
+      "axminions.place.lumber": true
+      "axminions.place.miner": true
+      "axminions.place.seller": true
+      "axminions.place.slayer": true
+  "axminions.place.collector":
+    description: "Place collector minions"
+    default: op
+  "axminions.place.crafter":
+    description: "Place crafter minions"
+    default: op
+  "axminions.place.farmer":
+    description: "Place farmer minions"
+    default: op
+  "axminions.place.fisher":
+    description: "Place fisher minions"
+    default: op
+  "axminions.place.lumber":
+    description: "Place lumber minions"
+    default: op
+  "axminions.place.miner":
+    description: "Place miner minions"
+    default: op
+  "axminions.place.seller":
+    description: "Place seller minions"
+    default: op
+  "axminions.place.slayer":
+    description: "Place slayer minions"
+    default: op
+
+  # Any number works as axminions.limit.<amount> and axminions.limit.<type>.<amount>, those can't be listed here
+  "axminions.limit.*":
+    description: "No limit on the amount of minions, axminions.limit.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.collector.*":
+    description: "No limit on the amount of collector minions, axminions.limit.collector.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.crafter.*":
+    description: "No limit on the amount of crafter minions, axminions.limit.crafter.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.farmer.*":
+    description: "No limit on the amount of farmer minions, axminions.limit.farmer.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.fisher.*":
+    description: "No limit on the amount of fisher minions, axminions.limit.fisher.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.lumber.*":
+    description: "No limit on the amount of lumber minions, axminions.limit.lumber.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.miner.*":
+    description: "No limit on the amount of miner minions, axminions.limit.miner.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.seller.*":
+    description: "No limit on the amount of seller minions, axminions.limit.seller.<amount> sets the limit to the amount"
+    default: op
+  "axminions.limit.slayer.*":
+    description: "No limit on the amount of slayer minions, axminions.limit.slayer.<amount> sets the limit to the amount"
+    default: op

@@ -15,6 +15,41 @@ import java.io.File
 import java.util.Locale
 
 class AxMinionsAPIImpl(private val plugin: AxMinionsPlugin) : AxMinionsAPI {
+    companion object {
+        private const val LIMIT_PERMISSION = "axminions.limit."
+
+        /**
+         * The minion limit from the default one and the permissions of the player, Int.MAX_VALUE means no limit.
+         * The extra slots are not in it, those come from the database.
+         */
+        fun permissionLimit(player: Player): Int {
+            var limit = Config.DEFAULT_MINION_LIMIT()
+
+            for (info in player.effectivePermissions) {
+                // A permission that is taken away (-axminions.limit.20) must not count
+                if (!info.value) continue
+
+                val permission = info.permission
+                if (permission.equals("*", true)) {
+                    return Int.MAX_VALUE
+                }
+
+                if (!permission.startsWith(LIMIT_PERMISSION)) continue
+                // axminions.limit.<type>.<amount> only limits one type, that is for getTypeLimit
+                if (permission.indexOf('.', LIMIT_PERMISSION.length) != -1) continue
+                if (permission.contains("*")) {
+                    return Int.MAX_VALUE
+                }
+
+                val value = permission.substring(LIMIT_PERMISSION.length).toIntOrNull() ?: continue
+                if (value > limit) {
+                    limit = value
+                }
+            }
+
+            return limit
+        }
+    }
 
     override fun getAxMinionsDataFolder(): File {
         return plugin.dataFolder
@@ -41,28 +76,31 @@ class AxMinionsAPIImpl(private val plugin: AxMinionsPlugin) : AxMinionsAPI {
     }
 
     override fun getMinionLimit(player: Player): Int {
-        var limit = Config.DEFAULT_MINION_LIMIT()
+        val limit = permissionLimit(player)
+        if (limit == Int.MAX_VALUE) return limit
 
-        player.effectivePermissions.forEach {
-            val permission = it.permission
-            if (permission.equals("*", true)) {
-                return Int.MAX_VALUE
-            }
+        return limit + AxMinionsPlugin.dataHandler.getExtraSlots(player.uniqueId)
+    }
 
-            if (!permission.startsWith("axminions.limit.")) return@forEach
-            if (permission.contains("*")) {
-                return Int.MAX_VALUE
-            }
-            val subString = permission.substring(permission.lastIndexOf('.') + 1)
-            if (subString.isBlank()) return@forEach
+    override fun getTypeLimit(player: Player, type: String): Int? {
+        val prefix = "$LIMIT_PERMISSION${type.lowercase(Locale.ENGLISH)}."
+        var limit: Int? = null
 
-            val value = subString.toInt()
+        for (info in player.effectivePermissions) {
+            if (!info.value) continue
 
-            if (value > limit) {
+            val permission = info.permission
+            if (!permission.startsWith(prefix)) continue
+
+            val amount = permission.substring(prefix.length)
+            if (amount == "*") return Int.MAX_VALUE
+
+            val value = amount.toIntOrNull() ?: continue
+            if (limit == null || value > limit) {
                 limit = value
             }
         }
-        limit += AxMinionsPlugin.dataHandler.getExtraSlots(player.uniqueId)
+
         return limit
     }
 

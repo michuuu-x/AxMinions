@@ -47,6 +47,36 @@ class Messages(file: File, stream: InputStream) {
         @JvmStatic
         fun PLACE_LIMIT_REACHED() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.limit-reached")
         @JvmStatic
+        fun PLACE_TYPE_LIMIT_REACHED() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "place.type-limit-reached",
+            "<red>Could not place minion! You have reached the limit of <type> minions! <gray>(<placed>/<max>)"
+        )
+        @JvmStatic
+        fun PLACE_WORLD_DISABLED() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "place.world-disabled",
+            "<red>Could not place minion! <type> minions can't be placed in this world!"
+        )
+        @JvmStatic
+        fun PLACE_REGION_DENIED() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "place.region-denied",
+            "<red>Could not place minion! Minions are not allowed in this region!"
+        )
+        /**
+         * The alert for the warning with the name, in the form it has in the config ('no-tool'), empty if there is none.
+         */
+        @JvmStatic
+        fun ALERT(warning: String): String = AxMinionsAPI.INSTANCE.getMessages().get("alerts.$warning", "")
+        @JvmStatic
+        fun ALERTS_ON() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "alerts.on",
+            "<green>You will get a message when one of your minions stops working."
+        )
+        @JvmStatic
+        fun ALERTS_OFF() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "alerts.off",
+            "<red>You will not get a message anymore when one of your minions stops working."
+        )
+        @JvmStatic
         fun PLACE_MINION_AT_LOCATION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.minion-at-location")
         @JvmStatic
         fun PLACE_MISSING_PERMISSION() = AxMinionsAPI.INSTANCE.getMessages().get<String>("place.missing-permission")
@@ -72,6 +102,11 @@ class Messages(file: File, stream: InputStream) {
         @JvmStatic
         fun ERROR_INVENTORY_FULL() = AxMinionsAPI.INSTANCE.getMessages().get<String>("errors.inventory-full")
         @JvmStatic
+        fun ERROR_NO_PERMISSION() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "errors.no-permission",
+            "<red>You do not have permission to do this!"
+        )
+        @JvmStatic
         fun LINK_SUCCESS() = AxMinionsAPI.INSTANCE.getMessages().get<String>("link.success")
         @JvmStatic
         fun LINK_UNLINK() = AxMinionsAPI.INSTANCE.getMessages().get<String>("link.unlink")
@@ -81,6 +116,21 @@ class Messages(file: File, stream: InputStream) {
         fun LINK_START() = AxMinionsAPI.INSTANCE.getMessages().get<String>("link.start")
         @JvmStatic
         fun LINK_CHEST_PROTECTED() = AxMinionsAPI.INSTANCE.getMessages().get<String>("link.chest-protected")
+        @JvmStatic
+        fun LINK_MAX_REACHED() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "link.max-reached",
+            "<red>This minion can only be linked to <max> container(s) at level <level>! Unlink one first, or upgrade the minion to link more."
+        )
+        @JvmStatic
+        fun LINK_ALREADY_LINKED() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "link.already-linked",
+            "<red>This minion is linked to that container already!"
+        )
+        @JvmStatic
+        fun UPGRADE_CONTAINERS_UNLOCKED() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "upgrades.containers-unlocked",
+            "<green>The minion can be linked to <white><max></white> containers now!"
+        )
         @JvmStatic
         fun UPGRADE_FAIL() = AxMinionsAPI.INSTANCE.getMessages().get<String>("upgrades.fail")
         @JvmStatic

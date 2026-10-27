@@ -24,8 +24,19 @@ minion-types:
   crafter: true
   seller: true
 
+# The worlds where minions can't be placed, the names are not case-sensitive, for example:
+# disabled-worlds:
+#   - "world_nether"
+# Minions that are already in these worlds keep working, and they can be picked up.
+# A single minion type can have its own list, with 'disabled-worlds' in its file in the minions folder.
+# A WorldGuard region can also not let minions be placed in it: /rg flag <region> axminions-place deny
+disabled-worlds: []
+
 # The default amount of minions a player can have.
 # This setting can be overwritten by setting the 'axminions.limit.<amount>' permission!
+# The minions of one type can be limited with the 'axminions.limit.<type>.<amount>' permission, for example
+# 'axminions.limit.farmer.3', or 'axminions.limit.farmer.*' for no limit on that type.
+# The type limit comes on top of this one, a player can't have more minions than the total limit allows.
 default-minion-limit: 5
 
 # If true, only the owner of this minion can pick it up (Shift + Right Click)
@@ -37,6 +48,27 @@ only-owner-break: true
 # If false, everyone, who can break blocks at said location can open the GUI of this minion
 # You should enable this, if you aren't using a supported protection plugin!
 only-owner-gui: true
+
+# The owner of a minion gets a message when it stops working because of a problem (the ones the holograms show),
+# as the holograms are easy to miss from far away. It works even if display-warnings is false.
+# Players can turn the messages off for themselves with /minions alerts (the axminions.command.alerts permission),
+# the text of the messages is in the messages.yml (alerts).
+alerts:
+  enabled: true
+  # Where the message is shown: chat, actionbar or both
+  type: "both"
+  # How many seconds until the owner is told about the same problem of the same minion again.
+  # If the problem is still there after this time, they get the message again.
+  cooldown: 600
+  # How many seconds there are at least between two messages to the same player.
+  # If several minions stop at once, they are told one after the other, so the action bar shows each of them
+  # (a minion that has to wait is told as soon as the time is over). Set to 0 to tell them all at once.
+  min-gap: 3
+  # The problems the owner is told about. Can be: no-tool, container-full, no-charge, no-container, no-water-nearby
+  warnings:
+    - "no-tool"
+    - "container-full"
+    - "no-charge"
 
 # Should minions show holograms if they have an issue?
 # (They won't complain about not having a girlfriend, though!)
@@ -79,7 +111,7 @@ upgrade-fail: "chat"
 upgrade-sound: "ENTITY_PLAYER_LEVELUP"
 
 database:
-  # Can be H2, SQLite or YAML
+  # Can be H2 or SQLite
   # Data is not migrated when you change the type!
   type: "SQLite"
 
@@ -141,12 +173,18 @@ gui:
         - ""
         - "<#33FF33><b>(!)</b> Click here to rotate your minion!"
       slot: 10
+    # How many containers a minion can be linked to depends on its level, 'containers' in the upgrades in its file in the minions folder.
+    # The items go to the first container, and to the next one when that one is full.
+    # Left-click links one more container, Right-click unlinks the one that was linked last.
+    # Placeholders: <linked_count>, <max_containers>, <linked> (the container that was linked last),
+    # <linked_1>, <linked_2>... (the containers one by one, --- if there is none), <direction>
     link:
       type: "chest"
       name: "<#FFCC00><b>Link to container"
       lore:
         - ""
-        - " <gray>- <white>Status: <#FFCC00><linked>"
+        - " <gray>- <white>Containers: <#FFCC00><linked_count>/<max_containers>"
+        - " <gray>- <white>Last linked: <#FFCC00><linked>"
         - ""
         - "<#FFCC00><b>(!)</b> Left-click: start container link"
         - "<#FFCC00><b>(!)</b> Right-click: unlink container"
@@ -245,4 +283,4 @@ holograms:
 debug: false
 
 # Do not change!
-config-version: 15
+config-version: 16

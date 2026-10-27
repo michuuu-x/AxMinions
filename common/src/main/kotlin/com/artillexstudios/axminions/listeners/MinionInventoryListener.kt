@@ -13,6 +13,7 @@ import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.CoolDown
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.api.utils.fastFor
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import java.util.Locale
 import net.md_5.bungee.api.ChatMessageType
@@ -33,6 +34,13 @@ class MinionInventoryListener : Listener {
     private companion object {
         // Players who can open the menu only because the owner trusts them can't do these, nor take the tool out
         val OWNER_ACTIONS = setOf("rotate", "link", "statistics")
+
+        // Everyone has these unless they are taken away, the pickup one is in the Minion
+        val ACTION_PERMISSIONS = mapOf(
+            "upgrade" to "axminions.use.upgrade",
+            "link" to "axminions.use.link",
+            "charge" to "axminions.use.charge"
+        )
     }
 
     private val coolDown = CoolDown<Player>()
@@ -138,6 +146,12 @@ class MinionInventoryListener : Listener {
 
         if (type != null && type in OWNER_ACTIONS && ownerOnly(player, minion)) return
 
+        val permission = type?.let { ACTION_PERMISSIONS[it] }
+        if (permission != null && !player.hasPermission(permission)) {
+            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_NO_PERMISSION()))
+            return
+        }
+
         when (type) {
             "rotate" -> {
                 when (minion.getDirection()) {
@@ -154,11 +168,25 @@ class MinionInventoryListener : Listener {
 
             "link" -> {
                 if (event.isRightClick) {
-                    if (minion.getLinkedChest() == null) return
+                    // The container that was linked last
+                    val chest = minion.getLinkedChests().lastOrNull() ?: return
 
-                    minion.setLinkedChest(null)
+                    minion.removeLinkedChest(chest)
                     player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_UNLINK()))
                 } else if (event.isLeftClick) {
+                    // A minion that can have one container swaps it, the others have to unlink one first
+                    val max = minion.getMaxLinkedChests()
+                    if (max > 1 && minion.getLinkedChests().size >= max) {
+                        player.sendMessage(
+                            StringUtils.formatToString(
+                                Messages.PREFIX() + Messages.LINK_MAX_REACHED(),
+                                Placeholder.unparsed("max", max.toString()),
+                                Placeholder.unparsed("level", minion.getLevel().toString())
+                            )
+                        )
+                        return
+                    }
+
                     player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.LINK_START()))
                     LinkingListener.linking[player] = minion
                     player.closeInventory()
@@ -198,7 +226,17 @@ class MinionInventoryListener : Listener {
                     )
                 }
 
+                val containers = minion.getMaxLinkedChests()
                 minion.setLevel(minion.getLevel() + 1)
+
+                if (minion.getMaxLinkedChests() > containers) {
+                    player.sendMessage(
+                        StringUtils.formatToString(
+                            Messages.PREFIX() + Messages.UPGRADE_CONTAINERS_UNLOCKED(),
+                            Placeholder.unparsed("max", minion.getMaxLinkedChests().toString())
+                        )
+                    )
+                }
             }
 
             "statistics" -> {

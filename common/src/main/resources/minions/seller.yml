@@ -10,6 +10,18 @@ tool:
 
 delete-unsellable: true
 
+# The items of these types are never sold (Bukkit Material names, case-insensitive): they stay in the container,
+# even if they have no price and 'delete-unsellable' is true. A shulker box in the list is left alone with its contents.
+# For example:
+# never-sell:
+#   - "elytra"
+#   - "enchanted_golden_apple"
+never-sell: []
+
+# The worlds where this minion can't be placed (not case-sensitive), on top of 'disabled-worlds' in the config.yml.
+# Minions that are already in these worlds keep working.
+disabled-worlds: []
+
 item:
   type: "player_head"
   texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDI0YmE3NjBhNjFkZDI1NmM1MmIzMjUxMjlmNDYwMTZhZTg5MjIzMmEwZGVhMTcxNWY5OTdmN2M0ZDYyMmJlZiJ9fX0="
@@ -33,6 +45,7 @@ gui:
       - " <gray>- <white>Level: <green><level> » <dark_green><next_level>"
       - " <gray>- <white>Multiplier: <green><multiplier> » <dark_green><next_multiplier>"
       - " <gray>- <white>Speed: <green><speed> » <dark_green><next_speed>"
+      - " <gray>- <white>Containers: <green><containers> » <dark_green><next_containers>"
       - ""
       - "<#00CCFF>Requirements:"
       - " <gray>- <white>Money: <#33FF33><price>$"
@@ -51,6 +64,9 @@ gui:
 
 upgrades:
   1:
+    # How many containers the minion can be linked to, the items go to the next one when a container is full.
+    # A level keeps the amount of the level before it, unless it sets its own.
+    containers: 1
     multiplier: 1
     speed: 600
     storage: 100000
@@ -78,6 +94,7 @@ upgrades:
       money: 1000
       actions: 100
   3:
+    containers: 2
     multiplier: 1.1
     speed: 450
     storage: 1000000
@@ -92,6 +109,7 @@ upgrades:
       money: 10000
       actions: 1000
   5:
+    containers: 3
     multiplier: 1.2
     speed: 350
     storage: 7000000
@@ -127,6 +145,7 @@ upgrades:
       money: 1000000
       actions: 25000
   10:
+    containers: 4
     multiplier: 1.5
     speed: 100
     storage: 100000000

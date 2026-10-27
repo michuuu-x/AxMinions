@@ -24,6 +24,16 @@ class ProtectionIntegrations : ProtectionIntegrations {
         return true
     }
 
+    override fun canPlaceMinionAt(player: Player, location: Location): Boolean {
+        integrations.fastFor {
+            if (!it.canPlaceMinionAt(player, location)) {
+                return false
+            }
+        }
+
+        return true
+    }
+
     fun clear() {
         integrations.clear()
     }
