@@ -29,12 +29,14 @@ class PlaceholderAPIIntegration : PlaceholderExpansion() {
 
         return when (params) {
             "placed" -> (PlayerStats.get(player.uniqueId)?.placed ?: 0).toString()
-            "limit" -> {
-                val limit = AxMinionsAPIImpl.permissionLimit(player)
+            "limit" -> totalLimit(player).toString()
+            // How many more minions the player can place, never below 0. Like the limit, it is the biggest number if there is no limit.
+            "remaining" -> {
+                val limit = totalLimit(player)
                 if (limit == Int.MAX_VALUE) {
                     limit.toString()
                 } else {
-                    (limit + (PlayerStats.get(player.uniqueId)?.extraSlots ?: 0)).toString()
+                    (limit - (PlayerStats.get(player.uniqueId)?.placed ?: 0)).coerceAtLeast(0).toString()
                 }
             }
 
@@ -51,6 +53,13 @@ class PlaceholderAPIIntegration : PlaceholderExpansion() {
                 if (params.startsWith("placed_")) placedOfType(player, params.substring("placed_".length)) else ""
             }
         }
+    }
+
+    private fun totalLimit(player: Player): Int {
+        val limit = AxMinionsAPIImpl.permissionLimit(player)
+        if (limit == Int.MAX_VALUE) return limit
+
+        return limit + (PlayerStats.get(player.uniqueId)?.extraSlots ?: 0)
     }
 
     private fun placedOfType(player: Player, name: String): String {
