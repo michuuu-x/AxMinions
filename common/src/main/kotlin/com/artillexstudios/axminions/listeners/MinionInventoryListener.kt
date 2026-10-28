@@ -48,8 +48,14 @@ class MinionInventoryListener : Listener {
         val ACTION_PERMISSIONS = mapOf(
             "upgrade" to "axminions.use.upgrade",
             "link" to "axminions.use.link",
-            "charge" to "axminions.use.charge"
+            "charge" to "axminions.use.charge",
+            "toggle" to "axminions.use.toggle",
+            "rotate" to "axminions.use.rotate",
+            "statistics" to "axminions.use.statistics"
         )
+
+        // Not a button, it is putting a tool in the minion or taking it out
+        const val TOOL_PERMISSION = "axminions.use.tool"
     }
 
     private val coolDown = CoolDown<Player>()
@@ -99,6 +105,7 @@ class MinionInventoryListener : Listener {
             }
 
             if (denied(player, minion, TrustPermission.TOOL)) return
+            if (noPermission(player, TOOL_PERMISSION)) return
 
             val minionToolEvent = MinionToolEvent(minion, player, event.currentItem!!.clone(), minion.getTool()!!.clone())
             Bukkit.getPluginManager().callEvent(minionToolEvent)
@@ -123,6 +130,7 @@ class MinionInventoryListener : Listener {
         if (event.slot == AxMinionsAPI.INSTANCE.getConfig().get("gui.items.item.slot")) {
             if (minion.getTool()?.type == Material.AIR) return
             if (denied(player, minion, TrustPermission.TOOL)) return
+            if (noPermission(player, TOOL_PERMISSION)) return
             if (player.inventory.firstEmpty() == -1) {
                 player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_INVENTORY_FULL()))
                 return
@@ -156,10 +164,7 @@ class MinionInventoryListener : Listener {
         if (trustPermission != null && denied(player, minion, trustPermission)) return
 
         val permission = type?.let { ACTION_PERMISSIONS[it] }
-        if (permission != null && !player.hasPermission(permission)) {
-            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_NO_PERMISSION()))
-            return
-        }
+        if (permission != null && noPermission(player, permission)) return
 
         when (type) {
             "rotate" -> {
@@ -412,6 +417,16 @@ class MinionInventoryListener : Listener {
                 Placeholder.unparsed("permission", AxMinionsPlugin.users.getLabel(permission))
             )
         )
+        return true
+    }
+
+    // Returns true (and tells the player) if the server took the axminions.use.<action> permission away from them
+    private fun noPermission(player: Player, permission: String): Boolean {
+        if (player.hasPermission(permission)) {
+            return false
+        }
+
+        player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_NO_PERMISSION()))
         return true
     }
 

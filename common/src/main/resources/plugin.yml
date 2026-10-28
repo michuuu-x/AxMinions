@@ -29,12 +29,15 @@ softdepend:
 # except the axminions.use ones and axminions.command.alerts, those are true for everyone and are there to be taken away
 permissions:
   # Every permission that lets a player get around a rule is in axminions.bypass.*, so a moderator can get
-  # only the one they need, without the commands. axminions.* includes all of them.
+  # only the one they need, without the commands. axminions.* includes the groups of permissions, but not axminions.limit.<amount>.
   "axminions.*":
-    description: "Everything in axminions.bypass.*"
+    description: "Everything in axminions.bypass.*, axminions.command.*, axminions.use.* and axminions.place.*"
     default: op
     children:
       "axminions.bypass.*": true
+      "axminions.command.*": true
+      "axminions.use.*": true
+      "axminions.place.*": true
   "axminions.bypass.*":
     description: "Get around the owner, the minion limit and the island limit"
     default: op
@@ -52,6 +55,20 @@ permissions:
     description: "Place minions on an island that reached the island limit"
     default: op
 
+  # The actions of the menu of a minion, everyone has them unless they are taken away.
+  # A trusted player needs the owner to allow the action as well (/minions users).
+  "axminions.use.*":
+    description: "Every action in the menu of a minion, and picking it up"
+    default: true
+    children:
+      "axminions.use.upgrade": true
+      "axminions.use.link": true
+      "axminions.use.charge": true
+      "axminions.use.pickup": true
+      "axminions.use.tool": true
+      "axminions.use.toggle": true
+      "axminions.use.rotate": true
+      "axminions.use.statistics": true
   "axminions.use.upgrade":
     description: "Upgrade a minion in its menu"
     default: true
@@ -64,7 +81,36 @@ permissions:
   "axminions.use.pickup":
     description: "Pick up a minion (Shift + Right Click)"
     default: true
+  "axminions.use.tool":
+    description: "Put a tool in a minion, or take it out, in its menu"
+    default: true
+  "axminions.use.toggle":
+    description: "Start or stop a minion in its menu"
+    default: true
+  "axminions.use.rotate":
+    description: "Rotate a minion in its menu"
+    default: true
+  "axminions.use.statistics":
+    description: "Take the stored money or experience out of a minion in its menu"
+    default: true
 
+  "axminions.command.*":
+    description: "Every command of the plugin, also the ones for the admins (give, reload, reset...)"
+    default: op
+    children:
+      "axminions.command.list": true
+      "axminions.command.shop": true
+      "axminions.command.users": true
+      "axminions.command.alerts": true
+      "axminions.command.give": true
+      "axminions.command.list.others": true
+      "axminions.command.fuel.give": true
+      "axminions.command.fuel.add": true
+      "axminions.command.reload": true
+      "axminions.command.convert": true
+      "axminions.command.statistics": true
+      "axminions.command.reset": true
+      "axminions.command.extraslot": true
   "axminions.command.list":
     description: "Open the menu of your minions (/minions list)"
     default: op

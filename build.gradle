@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.artillexstudios.axminions'
-version = '1.0.23-b3'
+version = '1.0.23-b4'
 
 repositories {
     mavenCentral()
