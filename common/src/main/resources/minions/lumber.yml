@@ -1,7 +1,8 @@
 name: "<#00AAFF>Lumberjack <white>Minion"
 
+# The name above the minion. Placeholders: <level>, <level_color>, <owner> and <charge_time>, the time left of the charge (see charge.hologram in the messages.yml), which is empty if charge is not enabled in the config.yml
 entity:
-  name: "<level_color>[<level>] <#00AAFF>Lumberjack <white>Minion <gray>[<owner>]"
+  name: "<level_color>[<level>] <#00AAFF>Lumberjack <white>Minion <gray>[<owner>]<charge_time>"
 
 tool:
   material:

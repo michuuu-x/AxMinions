@@ -96,6 +96,13 @@ class Messages(file: File, stream: InputStream) {
         @JvmStatic
         fun CHARGE_FAIL() = AxMinionsAPI.INSTANCE.getMessages().get<String>("charge.not-enough-money")
         @JvmStatic
+        fun CHARGE_ONLY_ITEMS() = AxMinionsAPI.INSTANCE.getMessages().get<String>("charge.only-items")
+        @JvmStatic
+        fun CHARGE_HOLOGRAM() = AxMinionsAPI.INSTANCE.getMessages().get(
+            "charge.hologram",
+            " <white>| <#FB8E08><time>"
+        )
+        @JvmStatic
         fun CHARGE_NOT_ENOUGH_TIME_PASSED() = AxMinionsAPI.INSTANCE.getMessages().get<String>("charge.not-enough-time-passed")
         @JvmStatic
         fun WRONG_TOOL() = AxMinionsAPI.INSTANCE.getMessages().get<String>("tools.wrong-tool")

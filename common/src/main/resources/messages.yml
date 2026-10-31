@@ -28,7 +28,7 @@ warnings:
   no-tool: "<#FF3333>⚠ <#FFAAAA>The minion needs a tool </#FFAAAA>⚠"
   no-water-nearby: "<#FF3333>⚠ <#FFAAAA>The minion needs water nearby </#FFAAAA>⚠"
   container-full: "<#FF3333>⚠ <#FFAAAA>The container of this minion is full </#FFAAAA>⚠"
-  no-charge: "<#FF3333>⚠ <#FFAAAA>The minion ran out of charge! Refuel it!</#FFAAAA>⚠"
+  no-charge: "<#FF3333>⚠ <#FFAAAA>The minion ran out of charge! Refuel it! </#FFAAAA>⚠"
 
 # Shown in the Start/Stop button and in the hologram below the name of the minion
 # Sent to the owner when a minion stops working, see alerts in the config.yml. There are <type>, <location>, <world>, <x>, <y> and <z>
@@ -92,6 +92,11 @@ directions:
 charge:
   charge: "<green>You have added <white>30 minutes</white> of charge to your minion!"
   not-enough-money: "<red>You don't have enough money to charge this minion!"
+  # Shown when charge.price is 0 in the config.yml and the player has no charge item
+  only-items: "<red>You can only charge this minion with a charge item!"
+  # What <charge_time> in the name of a minion (entity.name in the files in the minions folder) is replaced with, <time> is the time left of the charge.
+  # It is empty if charge is not enabled in the config.yml, so the name doesn't have the separator then
+  hologram: " <white>| <#FB8E08><time>"
   not-enough-time-passed: "<red>Your minion is nearly fully charged! Wait a bit before charging it again!"
 
 tools:
@@ -138,4 +143,4 @@ users:
   no-access: "<red>You can't open the menu of this minion, because you are not its owner or one of the trusted players!"
 
 # Do not change!
-config-version: 22
+config-version: 24

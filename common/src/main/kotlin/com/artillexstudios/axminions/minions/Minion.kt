@@ -115,6 +115,13 @@ class Minion(
     private val nameHologramViewers = HashSet<UUID>()
     private val statusHologramViewers = HashSet<UUID>()
     private val warningHologramViewers = HashSet<UUID>()
+    private var nameContent = ""
+    private var chargeButtonTime = ""
+
+    // The charge of a stopped minion doesn't run out, so the time it stays stopped is added to it (getCharge and setCharge do that).
+    // This is when it was stopped, 0 while it works
+    private var stoppedAt = if (working) 0L else System.currentTimeMillis()
+    private val chargeLock = Any()
     private val extraData = hashMapOf<String, String>()
     // A linked container with its inventory, which is only there while the chunk of the container is loaded
     private class LinkedContainer(val location: Location) {
@@ -252,12 +259,8 @@ class Minion(
             HologramStyler.apply(meta as TextDisplayMeta, nameSection)
         }
         HologramStyler.applyViewDistance(namePage, nameSection)
-        namePage.content = StringUtils.formatToString(
-            type.getConfig().get("entity.name"),
-            Placeholder.unparsed("owner", owner.name ?: "???"),
-            Placeholder.unparsed("level", level.toString()),
-            Placeholder.parsed("level_color", Messages.LEVEL_COLOR(level))
-        )
+        nameContent = nameText()
+        namePage.content = nameContent
         namePage.spawn()
 
         // The status is its own hologram below the name, so the name and the warnings keep their place
@@ -270,6 +273,40 @@ class Minion(
         HologramStyler.applyViewDistance(statusPage, statusSection)
         statusPage.content = statusText()
         statusPage.spawn()
+    }
+
+    // <charge_time> is the time the Current charge in the menu shows, in the format of charge.hologram in the messages.yml.
+    // It is empty if the minions don't need charge, so the separator is only there with it
+    private fun nameText(): String {
+        val chargeTime = if (Config.CHARGE_ENABLED()) {
+            Messages.CHARGE_HOLOGRAM().replace("<time>", TimeUtils.format(getCharge() - System.currentTimeMillis()))
+        } else {
+            ""
+        }
+
+        return StringUtils.formatToString(
+            type.getConfig().get("entity.name"),
+            Placeholder.unparsed("owner", owner.name ?: "???"),
+            Placeholder.unparsed("level", level.toString()),
+            Placeholder.parsed("level_color", Messages.LEVEL_COLOR(level)),
+            Placeholder.parsed("charge_time", chargeTime)
+        )
+    }
+
+    private fun setNameContent() {
+        val text = nameText()
+        if (text == nameContent) return
+
+        nameContent = text
+        nameHologram?.setContent(0, text)
+    }
+
+    // The time of the charge counts down, so the name is refreshed every second, but only if it shows it and someone sees it
+    private fun updateChargeTime() {
+        if (!Config.CHARGE_ENABLED() || nameHologramViewers.isEmpty()) return
+        if (!type.getConfig().get<String>("entity.name").contains("<charge_time>")) return
+
+        setNameContent()
     }
 
     private fun statusText(): String {
@@ -320,6 +357,8 @@ class Minion(
 
         if (MinionTicker.getTick() % 20L == 0L) {
             updateHologramVisibility()
+            updateChargeTime()
+            updateChargeButton()
         }
 
         // Disabled types don't work, their minions can only be picked up
@@ -516,19 +555,7 @@ class Minion(
                 meta.persistentDataContainer.set(Keys.GUI, PersistentDataType.STRING, it)
                 item.itemMeta = meta
             } else if (it.equals("charge")) {
-                if (Config.CHARGE_ENABLED()) {
-                    val charge = Placeholder.parsed("charge", TimeUtils.format(charge - System.currentTimeMillis()))
-                    item = ItemBuilder.create(
-                        AxMinionsAPI.INSTANCE.getConfig().getConfig().getSection("gui.items.$it"),
-                        charge
-                    ).get()
-
-                    val meta = item.itemMeta!!
-                    meta.persistentDataContainer.set(Keys.GUI, PersistentDataType.STRING, it)
-                    item.itemMeta = meta
-                } else {
-                    item = null
-                }
+                item = chargeItem(TimeUtils.format(getCharge() - System.currentTimeMillis()))
             } else {
                 val chests = getLinkedChests()
                 val resolvers = arrayListOf<TagResolver>(
@@ -561,6 +588,35 @@ class Minion(
         }
     }
 
+    // The button of the charge, null if the minions don't need charge
+    private fun chargeItem(time: String): ItemStack? {
+        if (!Config.CHARGE_ENABLED()) return null
+
+        val item = ItemBuilder.create(
+            AxMinionsAPI.INSTANCE.getConfig().getConfig().getSection("gui.items.charge"),
+            Placeholder.parsed("charge", time)
+        ).get()
+
+        val meta = item.itemMeta!!
+        meta.persistentDataContainer.set(Keys.GUI, PersistentDataType.STRING, "charge")
+        item.itemMeta = meta
+        return item
+    }
+
+    // The time of the charge counts down, so while the menu is open only the button of the charge is refreshed every second,
+    // and only if the time changed (it doesn't while the minion is stopped)
+    private fun updateChargeButton() {
+        if (!Config.CHARGE_ENABLED() || openInventories.isEmpty()) return
+
+        val time = TimeUtils.format(getCharge() - System.currentTimeMillis())
+        if (time == chargeButtonTime) return
+        chargeButtonTime = time
+
+        val item = chargeItem(time) ?: return
+        val slot: Int = AxMinionsAPI.INSTANCE.getConfig().get("gui.items.charge.slot")
+        openInventories.fastFor { it.setItem(slot, item) }
+    }
+
     override fun openInventory(player: Player) {
         LinkingListener.linking.remove(player)
         val inventory = Bukkit.createInventory(
@@ -585,7 +641,7 @@ class Minion(
     }
 
     override fun getAsItem(): ItemStack {
-        return type.getItem(level, actions, charge)
+        return type.getItem(level, actions, getCharge())
     }
 
     override fun getLevel(): Int {
@@ -670,15 +726,7 @@ class Minion(
         updateArmour()
         updateInventories()
 
-        nameHologram?.setContent(
-            0,
-            StringUtils.formatToString(
-                type.getConfig().get("entity.name"),
-                Placeholder.unparsed("owner", owner.name ?: "???"),
-                Placeholder.unparsed("level", level.toString()),
-                Placeholder.parsed("level_color", Messages.LEVEL_COLOR(level))
-            )
-        )
+        setNameContent()
 
         AxMinionsPlugin.dataQueue.submit {
             AxMinionsPlugin.dataHandler.saveMinion(this)
@@ -1150,7 +1198,19 @@ class Minion(
 
     override fun setWorking(working: Boolean) {
         if (this.working == working) return
-        this.working = working
+
+        synchronized(chargeLock) {
+            val now = System.currentTimeMillis()
+            if (working) {
+                // It has as much charge left as it had when it was stopped
+                if (stoppedAt != 0L) charge += now - stoppedAt
+                stoppedAt = 0L
+            } else {
+                stoppedAt = now
+            }
+
+            this.working = working
+        }
 
         if (!working) {
             warning?.let { Warnings.remove(this, it) }
@@ -1173,11 +1233,15 @@ class Minion(
     }
 
     override fun getCharge(): Long {
-        return charge
+        return synchronized(chargeLock) {
+            if (stoppedAt == 0L) charge else charge + (System.currentTimeMillis() - stoppedAt)
+        }
     }
 
     override fun setCharge(charge: Long) {
-        this.charge = charge
+        synchronized(chargeLock) {
+            this.charge = if (stoppedAt == 0L) charge else charge - (System.currentTimeMillis() - stoppedAt)
+        }
 
         AxMinionsPlugin.dataQueue.submit {
             AxMinionsPlugin.dataHandler.saveMinion(this)

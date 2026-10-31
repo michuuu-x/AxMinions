@@ -99,6 +99,12 @@ class MinionInventoryListener : Listener {
         }
 
         if (event.clickedInventory == player.inventory && event.currentItem != null) {
+            // A charge item in the inventory charges the minion, it is not a tool
+            if (chargeWithItem(player, minion, event.currentItem!!, event.isShiftClick)) {
+                minion.updateInventories()
+                return
+            }
+
             if (event.currentItem!!.type !in allowedTools) {
                 player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.WRONG_TOOL()))
                 return
@@ -306,37 +312,12 @@ class MinionInventoryListener : Listener {
                             }
                         }
 
-                        if (Config.CHARGE_PRICE() <= 0 && !itemCharge) {
-                            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE_FAIL()))
-                            return
-                        }
+                        if (!itemCharge && !payCharge(player)) return
 
-                        if (!itemCharge) {
-                            if ((AxMinionsPlugin.integrations.getEconomyIntegration()?.getBalance(player)
-                                    ?: return) < Config.CHARGE_PRICE()
-                            ) {
-                                player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE_FAIL()))
-                                return
-                            }
+                        // A free charge of nothing would never end
+                        if (chargeAmount <= 0) return
 
-                            // The player who charges pays, which is not the owner when the player is trusted
-                            AxMinionsPlugin.integrations.getEconomyIntegration()?.takeBalance(player, Config.CHARGE_PRICE())
-                        }
-
-                        if (chargeSeconds + chargeAmount > Config.MAX_CHARGE() * 60L) {
-                            minion.setCharge(System.currentTimeMillis() + Config.MAX_CHARGE() * 60L * 1000L)
-                            return
-                        }
-
-                        if (minion.getCharge() < System.currentTimeMillis()) {
-                            minion.setCharge(System.currentTimeMillis() + chargeAmount * 1000)
-                        } else {
-                            minion.setCharge(minion.getCharge() + chargeAmount * 1000)
-                        }
-
-                        if (Messages.CHARGE().isNotBlank()) {
-                            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE()))
-                        }
+                        if (!addCharge(player, minion, chargeSeconds, chargeAmount)) return
                     }
                 } else {
                     val chargeSeconds = (minion.getCharge() - System.currentTimeMillis()) / 1000
@@ -360,37 +341,9 @@ class MinionInventoryListener : Listener {
                         }
                     }
 
-                    if (Config.CHARGE_PRICE() <= 0 && !itemCharge) {
-                        player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE_FAIL()))
-                        return
-                    }
+                    if (!itemCharge && !payCharge(player)) return
 
-                    if (!itemCharge) {
-                        if ((AxMinionsPlugin.integrations.getEconomyIntegration()?.getBalance(player)
-                                ?: return) < Config.CHARGE_PRICE()
-                        ) {
-                            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE_FAIL()))
-                            return
-                        }
-
-                        // The player who charges pays, which is not the owner when the player is trusted
-                        AxMinionsPlugin.integrations.getEconomyIntegration()?.takeBalance(player, Config.CHARGE_PRICE())
-                    }
-
-                    if (chargeSeconds + chargeAmount > Config.MAX_CHARGE() * 60L) {
-                        minion.setCharge(System.currentTimeMillis() + Config.MAX_CHARGE() * 60L * 1000L)
-                        return
-                    }
-
-                    if (minion.getCharge() < System.currentTimeMillis()) {
-                        minion.setCharge(System.currentTimeMillis() + chargeAmount * 1000)
-                    } else {
-                        minion.setCharge(minion.getCharge() + chargeAmount * 1000)
-                    }
-
-                    if (Messages.CHARGE().isNotBlank()) {
-                        player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE()))
-                    }
+                    addCharge(player, minion, chargeSeconds, chargeAmount)
                 }
             }
         }
@@ -398,11 +351,93 @@ class MinionInventoryListener : Listener {
         minion.updateInventories()
     }
 
+    // Adds the charge to the minion, returns false if it is full now, so there is no point in charging it more
+    private fun addCharge(player: Player, minion: Minion, chargeSeconds: Long, chargeAmount: Int): Boolean {
+        if (chargeSeconds + chargeAmount > Config.MAX_CHARGE() * 60L) {
+            minion.setCharge(System.currentTimeMillis() + Config.MAX_CHARGE() * 60L * 1000L)
+            return false
+        }
+
+        if (minion.getCharge() < System.currentTimeMillis()) {
+            minion.setCharge(System.currentTimeMillis() + chargeAmount * 1000)
+        } else {
+            minion.setCharge(minion.getCharge() + chargeAmount * 1000)
+        }
+
+        if (Messages.CHARGE().isNotBlank()) {
+            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE()))
+        }
+
+        return true
+    }
+
+    // Clicking a charge item (charge.items in the config.yml) in the inventory charges the minion with it, like the
+    // charge button does. Shift-click uses as many of them as the minion takes. Returns false if the item is not a charge item.
+    private fun chargeWithItem(player: Player, minion: Minion, clicked: ItemStack, all: Boolean): Boolean {
+        if (!Config.CHARGE_ENABLED()) return false
+
+        val section = Config.CHARGE_ITEMS()
+        var item: ItemStack? = null
+        var chargeAmount = 0
+        for (key in section.keys) {
+            val candidate = ItemBuilder.create(section.getSection(key.toString())).get()
+            if (candidate.isSimilar(clicked)) {
+                item = candidate
+                chargeAmount = section.getSection(key.toString()).getInt("charge")
+                break
+            }
+        }
+
+        if (item == null) return false
+
+        if (denied(player, minion, TrustPermission.CHARGE)) return true
+        if (noPermission(player, ACTION_PERMISSIONS.getValue("charge"))) return true
+
+        while (true) {
+            val chargeSeconds = (minion.getCharge() - System.currentTimeMillis()) / 1000
+
+            if ((Config.MAX_CHARGE() * 60) - chargeSeconds < Config.MINIMUM_CHARGE()) {
+                player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE_NOT_ENOUGH_TIME_PASSED()))
+                break
+            }
+
+            // A charge of nothing would never end
+            if (chargeAmount <= 0 || !player.inventory.containsAtLeast(item, 1)) break
+
+            player.inventory.removeItem(item)
+            if (!addCharge(player, minion, chargeSeconds, chargeAmount) || !all) break
+        }
+
+        return true
+    }
+
     @EventHandler
     fun onInventoryCloseEvent(event: InventoryCloseEvent) {
         val holder = event.inventory.holder as? Minion ?: return
 
         holder.removeOpenInventory(event.inventory)
+    }
+
+    // Takes the price of a charge when no charge item was used. Returns false (and tells the player) if it can't be paid.
+    // A price of 0 turns paying with money off, so only the charge items work, and a price below 0 is free
+    private fun payCharge(player: Player): Boolean {
+        val price = Config.CHARGE_PRICE()
+        if (price < 0) return true
+
+        if (price == 0.0) {
+            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE_ONLY_ITEMS()))
+            return false
+        }
+
+        val economy = AxMinionsPlugin.integrations.getEconomyIntegration() ?: return false
+        if (economy.getBalance(player) < price) {
+            player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.CHARGE_FAIL()))
+            return false
+        }
+
+        // The player who charges pays, which is not the owner when the player is trusted
+        economy.takeBalance(player, price)
+        return true
     }
 
     // Returns true (and tells the player) if they can open this menu only because the owner trusts them, and the owner didn't allow this

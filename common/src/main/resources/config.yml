@@ -134,8 +134,10 @@ charge:
   enabled: false
   amount: 1800 # in seconds
   max-charge: 1440 # in minutes
-  price: 10000
+  price: 0 # 0 - only the items below can charge a minion, -1 - charging is free
   minimum-charge: 30 # in seconds
+  # Click one of these items in your inventory while the menu of a minion is open to charge it (Shift-click uses as many as it takes),
+  # the charge button uses them as well. /axminions fuel give gives one
   items:
     1:
       type: coal
