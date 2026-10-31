@@ -77,6 +77,7 @@ class FisherMinionType : MinionType("fisher", AxMinionsPlugin.INSTANCE.getResour
         }
         val xp = ThreadLocalRandom.current().nextInt(6) + 1
 
+        minion.playWorkAnimation()
         minion.addToContainerOrDrop(loot)
         val coerced = (minion.getStorage() + xp).coerceIn(0.0, minion.getType().getLong("storage", minion.getLevel()).toDouble())
         minion.setStorage(coerced)

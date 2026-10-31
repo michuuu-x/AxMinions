@@ -52,6 +52,7 @@ class LumberMinionType : MinionType("lumber", AxMinionsPlugin.INSTANCE.getResour
             MinionUtils.getTree(location.block).forEach {
                 val down = it.getRelative(BlockFace.DOWN).type
                 loot.addAll(it.getDrops(minion.getTool()))
+                minion.playWorkAnimation()
 
                 if (down == Material.DIRT || down == Material.GRASS_BLOCK || down == Material.COARSE_DIRT || down == Material.ROOTED_DIRT || down == Material.DIRT_PATH || down == Material.MUD || down == Material.MUDDY_MANGROVE_ROOTS || down == Material.PODZOL) {
                     it.type = getSaplingType(it.type)

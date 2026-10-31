@@ -14,12 +14,11 @@ dependencies {
     compileOnly files('../libs/IridiumSkyblock-4.0.9.jar')
     compileOnly files('../libs/KingdomsX-1.16.12.jar')
     compileOnly 'dev.rosewood:rosestacker:1.5.11'
-    compileOnly 'com.bgsoftware:WildStackerAPI:2023.2'
+    compileOnly 'com.bgsoftware:WildStackerAPI:2026.2'
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7.1'
     compileOnly 'com.github.brcdev-minecraft:shopgui-api:3.0.0'
     compileOnly 'com.h2database:h2:2.2.220'
     compileOnly("org.xerial:sqlite-jdbc:3.49.1.0")
-    compileOnly 'com.bgsoftware:WildStackerAPI:2023.2'
     compileOnly 'net.essentialsx:EssentialsX:2.19.0'
     compileOnly 'com.github.Gypopo:EconomyShopGUI-API:1.7.0'
     compileOnly 'com.github.brcdev-minecraft:shopgui-api:3.0.0'
@@ -32,6 +31,9 @@ dependencies {
     compileOnly 'com.github.TechFortress:GriefPrevention:16.18'
     compileOnly 'com.github.angeschossen:LandsAPI:6.29.12'
     compileOnly 'com.github.LoneDev6:api-itemsadder:3.6.1'
+    compileOnly('com.nexomc:nexo:1.27.0') {
+        transitive = false
+    }
     compileOnly('com.ticxo.modelengine:ModelEngine:R4.1.0') {
         transitive = false
     }

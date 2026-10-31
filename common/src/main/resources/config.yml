@@ -168,6 +168,7 @@ number-formatting:
   # Allowed modes: UP, DOWN, CEILING, FLOOR, HALF_UP, HALF_DOWN, HALF_EVEN, UNNECESSARY
   rounding: HALF_EVEN
 
+# The type of the items below (and of the charge items) can also be an item of Nexo: nexo_<id>, the name, lore... are put on that item
 gui:
   size: 27
   items:

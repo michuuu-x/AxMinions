@@ -10,6 +10,7 @@ import com.artillexstudios.axminions.api.integrations.types.*
 import com.artillexstudios.axminions.integrations.economy.ExcellentEconomyIntegration
 import com.artillexstudios.axminions.integrations.economy.PlayerPointsIntegration
 import com.artillexstudios.axminions.integrations.economy.VaultIntegration
+import com.artillexstudios.axminions.integrations.item.NexoItemIntegration
 import com.artillexstudios.axminions.integrations.model.ModelEngineIntegration
 import com.artillexstudios.axminions.integrations.placeholder.PlaceholderAPIIntegration
 import com.artillexstudios.axminions.integrations.prices.BuiltinPricesIntegration
@@ -28,6 +29,7 @@ import com.artillexstudios.axminions.integrations.stacker.DefaultStackerIntegrat
 import com.artillexstudios.axminions.integrations.stacker.RoseStackerIntegration
 import com.artillexstudios.axminions.integrations.stacker.WildStackerIntegration
 import com.artillexstudios.axminions.listeners.ModelEngineListener
+import com.artillexstudios.axminions.listeners.NexoListener
 import com.artillexstudios.axminions.listeners.SuperiorSkyBlock2Listener
 import java.util.Locale
 import org.bukkit.Bukkit
@@ -38,11 +40,14 @@ class Integrations : Integrations {
     private var economyIntegration: EconomyIntegration? = null
     private var islandIntegration: IslandIntegration? = null
     private var modelIntegration: ModelIntegration? = null
+    private var itemIntegration: ItemIntegration? = null
 
-    // reload() runs again with /axminions reload, and the listener of ModelEngine must not be registered twice
+    // reload() runs again with /axminions reload, and the listeners of ModelEngine and Nexo must not be registered twice
     private var modelEngineListenerRegistered = false
+    private var nexoListenerRegistered = false
     private val protectionIntegrations = com.artillexstudios.axminions.integrations.protection.ProtectionIntegrations()
     internal var itemsAdderIntegration = false
+    internal var nexoIntegration = false
 
     override fun getStackerIntegration(): StackerIntegration {
         return stackerIntegration
@@ -62,6 +67,10 @@ class Integrations : Integrations {
 
     override fun getModelIntegration(): ModelIntegration? {
         return modelIntegration
+    }
+
+    override fun getItemIntegration(): ItemIntegration? {
+        return itemIntegration
     }
 
     override fun getProtectionIntegration(): ProtectionIntegrations {
@@ -214,6 +223,17 @@ class Integrations : Integrations {
                 .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ItemsAdder!"))
         }
 
+        if (Bukkit.getPluginManager().getPlugin("Nexo") != null) {
+            nexoIntegration = true
+            register(NexoItemIntegration())
+            if (!nexoListenerRegistered) {
+                nexoListenerRegistered = true
+                Bukkit.getPluginManager().registerEvents(NexoListener(), AxMinionsPlugin.INSTANCE)
+            }
+            Bukkit.getConsoleSender()
+                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into Nexo!"))
+        }
+
         if (Bukkit.getPluginManager().getPlugin("ModelEngine") != null) {
             register(ModelEngineIntegration())
             if (!modelEngineListenerRegistered) {
@@ -255,6 +275,10 @@ class Integrations : Integrations {
 
             is ModelIntegration -> {
                 modelIntegration = integration
+            }
+
+            is ItemIntegration -> {
+                itemIntegration = integration
             }
 
             else -> {

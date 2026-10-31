@@ -7,12 +7,12 @@ import com.artillexstudios.axapi.libs.boostedyaml.settings.general.GeneralSettin
 import com.artillexstudios.axapi.libs.boostedyaml.settings.loader.LoaderSettings
 import com.artillexstudios.axapi.libs.boostedyaml.settings.updater.UpdaterSettings
 import com.artillexstudios.axapi.scheduler.Scheduler
-import com.artillexstudios.axapi.utils.ItemBuilder
 import com.artillexstudios.axapi.utils.StringUtils
 import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.AxMinionsAPI
 import com.artillexstudios.axminions.api.config.Messages
 import com.artillexstudios.axminions.api.minions.Minion
+import com.artillexstudios.axminions.api.utils.ItemUtils
 import com.artillexstudios.axminions.api.utils.NumberFormatUtils
 import com.artillexstudios.axminions.api.utils.TimeUtils
 import com.artillexstudios.axminions.api.warnings.Warnings
@@ -298,7 +298,7 @@ class MinionList(file: File, stream: InputStream) {
         holder.page = holder.page.coerceIn(0, pages - 1)
 
         val inventory = holder.inventory
-        val filler = ItemBuilder.create(config.getSection("filler")).get()
+        val filler = ItemUtils.create(config.getSection("filler")).get()
         for (i in 0 until inventory.size) {
             inventory.setItem(i, filler)
         }
@@ -316,9 +316,9 @@ class MinionList(file: File, stream: InputStream) {
         )
 
         place(inventory, sortSlot, createSortItem(holder.sort))
-        place(inventory, backSlot, ItemBuilder.create(config.getSection("back.item"), *resolvers).clonedGet())
+        place(inventory, backSlot, ItemUtils.create(config.getSection("back.item"), *resolvers).clonedGet())
         if (holder.page < pages - 1) {
-            place(inventory, nextSlot, ItemBuilder.create(config.getSection("next.item"), *resolvers).clonedGet())
+            place(inventory, nextSlot, ItemUtils.create(config.getSection("next.item"), *resolvers).clonedGet())
         }
     }
 
@@ -407,7 +407,7 @@ class MinionList(file: File, stream: InputStream) {
             lore.addAll(config.getStringList(if (teleportCosts) "teleport.lore-paid" else "teleport.lore", emptyList()))
         }
 
-        return ItemBuilder.create(minion.getType().getConfig().getSection("item"), *resolvers)
+        return ItemUtils.create(minion.getType().getConfig().getSection("item"), *resolvers)
             .setName(config.getString("minion.name", "<minion> Lv.<level>"), *resolvers)
             .setLore(lore, *resolvers)
             .clonedGet()
@@ -427,6 +427,6 @@ class MinionList(file: File, stream: InputStream) {
 
         lore.addAll(config.getStringList("sort.footer", emptyList()))
 
-        return ItemBuilder.create(config.getSection("sort.item")).setLore(lore).clonedGet()
+        return ItemUtils.create(config.getSection("sort.item")).setLore(lore).clonedGet()
     }
 }

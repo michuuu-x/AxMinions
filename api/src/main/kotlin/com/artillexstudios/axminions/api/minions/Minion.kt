@@ -77,6 +77,14 @@ interface Minion : InventoryHolder {
     fun animate()
 
     /**
+     * Plays the animation of the model for the movement of the arm ('model-animation' in the config of the type).
+     * The types call it when the minion really does its job, for example when it breaks a block, so call it from
+     * the types that are added as well. It does nothing if the minion has no model, and playing it again in
+     * the same tick changes nothing.
+     */
+    fun playWorkAnimation()
+
+    /**
      * Links the minion to this one container only, any other container it was linked to is unlinked.
      * Use [addLinkedChest] to keep the others.
      */

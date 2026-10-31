@@ -7,9 +7,9 @@ import com.artillexstudios.axapi.libs.boostedyaml.settings.dumper.DumperSettings
 import com.artillexstudios.axapi.libs.boostedyaml.settings.general.GeneralSettings
 import com.artillexstudios.axapi.libs.boostedyaml.settings.loader.LoaderSettings
 import com.artillexstudios.axapi.libs.boostedyaml.settings.updater.UpdaterSettings
-import com.artillexstudios.axapi.utils.ItemBuilder
 import com.artillexstudios.axminions.api.AxMinionsAPI
 import com.artillexstudios.axminions.api.minions.Minion
+import com.artillexstudios.axminions.api.utils.ItemUtils
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.api.utils.fastFor
 import java.io.File
@@ -88,7 +88,7 @@ abstract class MinionType(private val name: String, private val defaults: InputS
     }
 
     fun getItem(level: Int = 1, actions: Long = 0, charge: Long = 0): ItemStack {
-        val builder = ItemBuilder.create(
+        val builder = ItemUtils.create(
             config.getSection("item"),
             Placeholder.unparsed("level", level.toString()),
             Placeholder.unparsed("actions", actions.toString())
@@ -155,7 +155,8 @@ abstract class MinionType(private val name: String, private val defaults: InputS
     }
 
     /**
-     * The animation of the model for the movement of the arm, which is played every time the minion does its job,
+     * The animation of the model for the movement of the arm, which is played only when the minion really does its job
+     * (see [Minion.playWorkAnimation]),
      * 'model-animation' in the config.
      */
     fun getModelAnimation(): String {

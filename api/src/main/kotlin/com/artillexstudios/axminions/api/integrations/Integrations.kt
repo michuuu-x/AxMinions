@@ -14,6 +14,8 @@ interface Integrations {
 
     fun getModelIntegration(): ModelIntegration?
 
+    fun getItemIntegration(): ItemIntegration?
+
     fun getProtectionIntegration(): ProtectionIntegrations
 
     fun reload()

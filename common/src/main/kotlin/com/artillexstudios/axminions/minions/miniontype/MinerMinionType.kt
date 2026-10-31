@@ -10,12 +10,13 @@ import com.artillexstudios.axminions.api.utils.LocationUtils
 import com.artillexstudios.axminions.api.utils.MinionUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warnings
+import com.artillexstudios.axminions.integrations.block.CustomBlocks
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.utils.Enchantments
 import com.artillexstudios.axminions.nms.NMSHandler
-import dev.lone.itemsadder.api.CustomBlock
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.inventory.FurnaceRecipe
 import org.bukkit.inventory.ItemStack
@@ -60,6 +61,11 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
         getConfig().getStringList("whitelist").fastFor {
             whitelist.add(Material.matchMaterial(it.uppercase(Locale.ENGLISH)) ?: return@fastFor)
         }
+    }
+
+    private fun breakBlock(minion: Minion, block: Block) {
+        block.type = Material.AIR
+        minion.playWorkAnimation()
     }
 
     private fun smeltDrops(drops: Collection<ItemStack>): Collection<ItemStack> {
@@ -114,7 +120,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                         integration?.handleBlockBreak(block)
 
                         minion.addToContainerOrDrop(drops)
-                        block.type = Material.AIR
+                        breakBlock(minion, block)
                     }
                 }
             }
@@ -146,7 +152,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                                         integration?.handleBlockBreak(block)
 
                                         minion.addToContainerOrDrop(drops)
-                                        block.type = Material.AIR
+                                        breakBlock(minion, block)
                                     }
                                 }
                             }
@@ -175,7 +181,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                                 integration?.handleBlockBreak(block)
 
                                 minion.addToContainerOrDrop(drops)
-                                block.type = Material.AIR
+                                breakBlock(minion, block)
                             }
                         }
                 }
@@ -205,7 +211,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                             integration?.handleBlockBreak(block)
 
                             minion.addToContainerOrDrop(drops)
-                            block.type = Material.AIR
+                            breakBlock(minion, block)
                         }
                     }
                 }
@@ -218,17 +224,16 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                 locCopy.setZ(locCopy.getBlockZ().toDouble())
                 LocationUtils.getAllBlocksFacing(locCopy, minion.getRange(), minion.getDirection().facing)
                     .fastFor { location ->
-                        if (AxMinionsPlugin.integrations.itemsAdderIntegration) {
-                            val block = CustomBlock.byAlreadyPlaced(location.block)
-                            if (block !== null) {
-                                val drops = block.getLoot(minion.getTool(), false)
-                                drops.forEach {
-                                    amount += it.amount
-                                }
-                                minion.addToContainerOrDrop(drops)
-                                block.remove()
-                                return@fastFor
+                        val customBlock = CustomBlocks.get(location.block)
+                        if (customBlock !== null) {
+                            val drops = customBlock.getLoot(minion.getTool())
+                            drops.forEach {
+                                amount += it.amount
                             }
+                            minion.addToContainerOrDrop(drops)
+                            customBlock.remove()
+                            minion.playWorkAnimation()
+                            return@fastFor
                         }
 
                         val canBreak = if (generatorMode) {
@@ -249,7 +254,7 @@ class MinerMinionType : MinionType("miner", AxMinionsPlugin.INSTANCE.getResource
                             integration?.handleBlockBreak(block)
 
                             minion.addToContainerOrDrop(drops)
-                            block.type = Material.AIR
+                            breakBlock(minion, block)
                         }
                     }
             }

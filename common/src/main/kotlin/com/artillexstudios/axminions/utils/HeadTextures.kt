@@ -2,6 +2,7 @@ package com.artillexstudios.axminions.utils
 
 import com.artillexstudios.axapi.libs.boostedyaml.block.implementation.Section
 import com.artillexstudios.axapi.utils.ItemBuilder
+import com.artillexstudios.axminions.api.utils.ItemUtils
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import java.util.Base64
 
@@ -24,7 +25,7 @@ object HeadTextures {
      * Creates the item of the section like [ItemBuilder.create] does, but the texture of a head can be an url too.
      */
     fun item(section: Section, vararg resolvers: TagResolver): ItemBuilder {
-        val builder = ItemBuilder.create(section, *resolvers)
+        val builder = ItemUtils.create(section, *resolvers)
         val texture = section.getString("texture") ?: return builder
         val encoded = encode(texture)
 

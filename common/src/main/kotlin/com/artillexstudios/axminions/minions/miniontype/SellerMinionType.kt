@@ -137,6 +137,7 @@ class SellerMinionType : MinionType("seller", AxMinionsPlugin.INSTANCE.getResour
             return false
         }
 
+        minion.playWorkAnimation()
         minion.setActions(minion.getActionAmount() + it.amount)
         minion.damageTool()
         minion.setStorage(minion.getStorage() + price)

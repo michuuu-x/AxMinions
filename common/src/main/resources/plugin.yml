@@ -19,6 +19,7 @@ softdepend:
   - SuperiorSkyBlock2
   - WorldGuard
   - ItemsAdder
+  - Nexo
   - ModelEngine
   - PlaceholderAPI
   - ExcellentEconomy

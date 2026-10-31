@@ -4,6 +4,7 @@ name: "<#FFEE00>Crafter <white>Minion"
 entity:
   name: "<level_color>[<level>] <#FFEE00>Crafter <white>Minion <gray>[<owner>]<charge_time>"
 
+# The items that can be the tool: Bukkit material names, "*" for every item, or an item of Nexo as nexo_<id>
 tool:
   material:
     - "*"
@@ -18,7 +19,7 @@ model-scale: 1.0
 # The animations are the ones of the model in Blockbench (Animate tab), the name has to be the same, upper and lower case letters count.
 # The animation that plays while the minion has nothing to do, it should loop (Loop Mode: Loop in Blockbench)
 model-idle-animation: "idle"
-# The animation for the movement of the arm, which plays every time the minion does its job, on top of the idle one.
+# The animation for the movement of the arm, which plays only when the minion really does its job (a block is broken, a mob is hit, an item is picked up, crafted or sold), on top of the idle one.
 # It should not loop (Loop Mode: Once). If both move the same bone, the Override setting of the animation decides which one is seen
 model-animation: "work"
 
@@ -26,6 +27,7 @@ model-animation: "work"
 # Minions that are already in these worlds keep working.
 disabled-worlds: []
 
+# The type can also be an item of Nexo: nexo_<id>. Leave the texture out then, the name, lore... below are put on that item
 item:
   type: "player_head"
   texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmNkYzBmZWI3MDAxZTJjMTBmZDUwNjZlNTAxYjg3ZTNkNjQ3OTMwOTJiODVhNTBjODU2ZDk2MmY4YmU5MmM3OCJ9fX0="

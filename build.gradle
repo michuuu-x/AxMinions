@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.artillexstudios.axminions'
-version = '1.0.23-b14'
+version = '1.0.23-b17'
 
 repositories {
     mavenCentral()
@@ -142,6 +142,13 @@ allprojects {
             url = uri("https://mvn.lumine.io/repository/maven-public/")
             content {
                 includeGroup("com.ticxo.modelengine")
+            }
+        }
+
+        maven {
+            url = uri("https://repo.nexomc.com/releases")
+            content {
+                includeGroup("com.nexomc")
             }
         }
     }

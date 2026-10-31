@@ -6,12 +6,12 @@ import com.artillexstudios.axapi.libs.boostedyaml.settings.dumper.DumperSettings
 import com.artillexstudios.axapi.libs.boostedyaml.settings.general.GeneralSettings
 import com.artillexstudios.axapi.libs.boostedyaml.settings.loader.LoaderSettings
 import com.artillexstudios.axapi.libs.boostedyaml.settings.updater.UpdaterSettings
-import com.artillexstudios.axapi.utils.ItemBuilder
 import com.artillexstudios.axapi.utils.StringUtils
 import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.config.Messages
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
+import com.artillexstudios.axminions.api.utils.ItemUtils
 import com.artillexstudios.axminions.api.utils.NumberFormatUtils
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
@@ -117,7 +117,7 @@ class MinionShop(file: File, stream: InputStream) {
         val inventory = Bukkit.createInventory(holder, size, StringUtils.formatToString(config.getString("title", "Minion Shop")))
         holder.setInventory(inventory)
 
-        val filler = ItemBuilder.create(config.getSection("filler")).get()
+        val filler = ItemUtils.create(config.getSection("filler")).get()
         for (i in 0 until size) {
             inventory.setItem(i, filler)
         }
@@ -199,7 +199,7 @@ class MinionShop(file: File, stream: InputStream) {
         val minionConfig = entry.type.getConfig()
         val lore = minionConfig.getStringList("item.lore", emptyList()) + config.getStringList("lore", emptyList())
 
-        return ItemBuilder.create(minionConfig.getSection("item"), *resolvers).setLore(lore, *resolvers).clonedGet()
+        return ItemUtils.create(minionConfig.getSection("item"), *resolvers).setLore(lore, *resolvers).clonedGet()
     }
 
     private fun hasSpace(inventory: PlayerInventory, item: ItemStack): Boolean {

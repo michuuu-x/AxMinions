@@ -79,6 +79,7 @@ class CollectorMinionType : MinionType("collector", AxMinionsPlugin.INSTANCE.get
                 AxMinionsAPI.INSTANCE.getIntegrations().getStackerIntegration().setStackSize(item, stack.amount)
             }
 
+            minion.playWorkAnimation()
             minion.setActions(minion.getActionAmount() + amount)
             minion.damageTool()
         }

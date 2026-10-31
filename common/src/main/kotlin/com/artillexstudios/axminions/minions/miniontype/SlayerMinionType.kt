@@ -74,6 +74,7 @@ class SlayerMinionType : MinionType("slayer", AxMinionsPlugin.INSTANCE.getResour
                 return@fastFor
             }
 
+            minion.playWorkAnimation()
             NMSHandler.get().attack(minion, it)
             minion.damageTool()
         }

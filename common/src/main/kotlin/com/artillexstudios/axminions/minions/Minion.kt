@@ -14,7 +14,6 @@ import com.artillexstudios.axapi.packetentity.meta.entity.ArmorStandMeta
 import com.artillexstudios.axapi.packetentity.meta.serializer.Accessors
 import com.artillexstudios.axapi.scheduler.Scheduler
 import com.artillexstudios.axapi.utils.EquipmentSlot
-import com.artillexstudios.axapi.utils.ItemBuilder
 import com.artillexstudios.axapi.utils.StringUtils
 import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.AxMinionsAPI
@@ -26,6 +25,7 @@ import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.MinionModel
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
+import com.artillexstudios.axminions.api.utils.ItemUtils
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.api.utils.NumberFormatUtils
 import com.artillexstudios.axminions.api.utils.MinionUtils
@@ -114,6 +114,7 @@ class Minion(
     @Volatile
     private var dirty = true
     private var armTick = 2.0
+    private var workAnimationTick = -1L
     private var warning: Warning? = null
     private var hologram: Hologram? = null
     private var nameHologram: Hologram? = null
@@ -587,7 +588,7 @@ class Minion(
                     if (type.hasReachedMaxLevel(this)) Messages.UPGRADES_MAX_LEVEL_REACHED() else type.getContainers(this.level + 1).toString()
                 )
 
-                item = ItemBuilder.create(
+                item = ItemUtils.create(
                     type.getConfig().getSection("gui.$it"),
                     level,
                     nextLevel,
@@ -621,7 +622,7 @@ class Minion(
                 // The button shows what a click does: "stop" while the minion works, "start" while it is stopped
                 val button = AxMinionsAPI.INSTANCE.getConfig().getConfig()
                     .getSection("gui.items.toggle.${if (working) "stop" else "start"}")
-                item = ItemBuilder.create(
+                item = ItemUtils.create(
                     button,
                     Placeholder.parsed("status", if (working) Messages.STATUS_WORKING() else Messages.STATUS_STOPPED())
                 ).get()
@@ -647,7 +648,7 @@ class Minion(
                     )
                 }
 
-                item = ItemBuilder.create(
+                item = ItemUtils.create(
                     AxMinionsAPI.INSTANCE.getConfig().getConfig().getSection("gui.items.$it"),
                     *resolvers.toTypedArray()
                 ).get()
@@ -667,7 +668,7 @@ class Minion(
     private fun chargeItem(time: String): ItemStack? {
         if (!Config.CHARGE_ENABLED()) return null
 
-        val item = ItemBuilder.create(
+        val item = ItemUtils.create(
             AxMinionsAPI.INSTANCE.getConfig().getConfig().getSection("gui.items.charge"),
             Placeholder.parsed("charge", time)
         ).get()
@@ -705,7 +706,7 @@ class Minion(
             )
         )
 
-        val filler = ItemBuilder.create(AxMinionsAPI.INSTANCE.getConfig().getConfig().getSection("gui.items.filler")).get()
+        val filler = ItemUtils.create(AxMinionsAPI.INSTANCE.getConfig().getConfig().getSection("gui.items.filler")).get()
         for (i in 0..<Config.GUI_SIZE()) {
             inventory.setItem(i, filler)
         }
@@ -838,7 +839,16 @@ class Minion(
 
     override fun resetAnimation() {
         armTick = 0.0
-        model?.playAnimation(type.getModelAnimation())
+    }
+
+    override fun playWorkAnimation() {
+        val model = model ?: return
+        // Breaking many blocks at once would restart it for each of them
+        val tick = MinionTicker.getTick()
+        if (workAnimationTick == tick) return
+
+        workAnimationTick = tick
+        model.playAnimation(type.getModelAnimation())
     }
 
     override fun animate() {
@@ -1074,19 +1084,19 @@ class Minion(
         if (model != null) return
 
         type.getSection("items.helmet", level)?.let {
-            entity.setItem(EquipmentSlot.HELMET, WrappedItemStack.wrap(ItemBuilder.create(it).get()))
+            entity.setItem(EquipmentSlot.HELMET, WrappedItemStack.wrap(ItemUtils.create(it).get()))
         }
 
         type.getSection("items.chestplate", level)?.let {
-            entity.setItem(EquipmentSlot.CHEST_PLATE, WrappedItemStack.wrap(ItemBuilder.create(it).get()))
+            entity.setItem(EquipmentSlot.CHEST_PLATE, WrappedItemStack.wrap(ItemUtils.create(it).get()))
         }
 
         type.getSection("items.leggings", level)?.let {
-            entity.setItem(EquipmentSlot.LEGGINGS, WrappedItemStack.wrap(ItemBuilder.create(it).get()))
+            entity.setItem(EquipmentSlot.LEGGINGS, WrappedItemStack.wrap(ItemUtils.create(it).get()))
         }
 
         type.getSection("items.boots", level)?.let {
-            entity.setItem(EquipmentSlot.BOOTS, WrappedItemStack.wrap(ItemBuilder.create(it).get()))
+            entity.setItem(EquipmentSlot.BOOTS, WrappedItemStack.wrap(ItemUtils.create(it).get()))
         }
     }
 
@@ -1252,15 +1262,12 @@ class Minion(
     }
 
     private fun pullFromChest(inventory: Inventory): ItemStack {
-        val allowedTools = arrayListOf<Material>()
-        getType().getConfig().getStringList("tool.material").fastFor {
-            allowedTools.add(Material.matchMaterial(it) ?: return@fastFor)
-        }
+        val allowedTools = getType().getConfig().getStringList("tool.material")
 
         // Take exactly one item from the first matching stack (Inventory#remove would wipe every identical stack)
         for (slot in 0 until inventory.size) {
             val stack = inventory.getItem(slot) ?: continue
-            if (stack.type !in allowedTools || isWornOut(stack)) continue
+            if (!ItemUtils.matches(allowedTools, stack) || isWornOut(stack)) continue
 
             val pulled = stack.clone()
             pulled.amount = 1

@@ -10,6 +10,7 @@ import com.artillexstudios.axminions.api.config.Messages
 import com.artillexstudios.axminions.api.data.DataHandler
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
+import com.artillexstudios.axminions.api.utils.ItemUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.converter.LitMinionsConverter
 import com.artillexstudios.axminions.integrations.island.SuperiorSkyBlock2Integration
@@ -70,7 +71,7 @@ class AxMinionsCommand {
     @Subcommand("fuel give")
     @CommandPermission("axminions.command.fuel.give")
     fun give(sender: CommandSender, id: String, receiver: Player, @Default("1") amount: Int) {
-        val item = ItemBuilder.create(Config.CHARGE_ITEMS().getSection(id)).get()
+        val item = ItemUtils.create(Config.CHARGE_ITEMS().getSection(id)).get()
         item.amount = amount
         receiver.inventory.addItem(item)
     }

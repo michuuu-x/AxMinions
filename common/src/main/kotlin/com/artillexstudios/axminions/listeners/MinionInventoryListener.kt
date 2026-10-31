@@ -1,6 +1,5 @@
 package com.artillexstudios.axminions.listeners
 
-import com.artillexstudios.axapi.utils.ItemBuilder
 import com.artillexstudios.axapi.utils.StringUtils
 import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.AxMinionsAPI
@@ -11,6 +10,7 @@ import com.artillexstudios.axminions.api.minions.Direction
 import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.CoolDown
+import com.artillexstudios.axminions.api.utils.ItemUtils
 import com.artillexstudios.axminions.api.utils.Keys
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.users.TrustPermission
@@ -86,17 +86,8 @@ class MinionInventoryListener : Listener {
 
         coolDown.add(player, 250)
 
-        val allowedTools = arrayListOf<Material>()
-        run breaking@{
-            minion.getType().getConfig().getStringList("tool.material").fastFor {
-                if (it.equals("*")) {
-                    allowedTools.addAll(Material.entries)
-                    return@breaking
-                }
-
-                allowedTools.add(Material.matchMaterial(it) ?: return@fastFor)
-            }
-        }
+        // Bukkit materials, items of other plugins (nexo_<id>), or * for every item
+        val allowedTools = minion.getType().getConfig().getStringList("tool.material")
 
         if (event.clickedInventory == player.inventory && event.currentItem != null) {
             // A charge item in the inventory charges the minion, it is not a tool
@@ -105,7 +96,7 @@ class MinionInventoryListener : Listener {
                 return
             }
 
-            if (event.currentItem!!.type !in allowedTools) {
+            if ("*" !in allowedTools && !ItemUtils.matches(allowedTools, event.currentItem!!)) {
                 player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.WRONG_TOOL()))
                 return
             }
@@ -289,7 +280,7 @@ class MinionInventoryListener : Listener {
                     val section = Config.CHARGE_ITEMS()
 
                     for (key in section.keys) {
-                        itemCache.add(Pair(ItemBuilder.create(section.getSection(key.toString())).get(), key.toString()))
+                        itemCache.add(Pair(ItemUtils.create(section.getSection(key.toString())).get(), key.toString()))
                     }
 
                     while (true) {
@@ -332,7 +323,7 @@ class MinionInventoryListener : Listener {
                     val section = Config.CHARGE_ITEMS()
 
                     for (key in section.keys) {
-                        val item = ItemBuilder.create(section.getSection(key.toString())).get()
+                        val item = ItemUtils.create(section.getSection(key.toString())).get()
                         if (player.inventory.containsAtLeast(item, 1)) {
                             itemCharge = true
                             chargeAmount = section.getSection(key.toString()).getInt("charge")
@@ -380,7 +371,7 @@ class MinionInventoryListener : Listener {
         var item: ItemStack? = null
         var chargeAmount = 0
         for (key in section.keys) {
-            val candidate = ItemBuilder.create(section.getSection(key.toString())).get()
+            val candidate = ItemUtils.create(section.getSection(key.toString())).get()
             if (candidate.isSimilar(clicked)) {
                 item = candidate
                 chargeAmount = section.getSection(key.toString()).getInt("charge")

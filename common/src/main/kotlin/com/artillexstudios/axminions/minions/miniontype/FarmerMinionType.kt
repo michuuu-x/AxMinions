@@ -8,10 +8,10 @@ import com.artillexstudios.axminions.api.utils.LocationUtils
 import com.artillexstudios.axminions.api.utils.MinionUtils
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.api.warnings.Warnings
+import com.artillexstudios.axminions.integrations.block.CustomBlocks
 import com.artillexstudios.axminions.minions.MinionTicker
 import com.artillexstudios.axminions.utils.Enchantments
 import com.artillexstudios.axminions.utils.MaterialList
-import dev.lone.itemsadder.api.CustomBlock
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import kotlin.math.roundToInt
@@ -86,20 +86,18 @@ class FarmerMinionType : MinionType("farmer", AxMinionsPlugin.INSTANCE.getResour
         blocks.fastFor { location ->
             val block = location.block
 
-            if (AxMinionsPlugin.integrations.itemsAdderIntegration) {
-                val customBlock = CustomBlock.byAlreadyPlaced(block)
-                if (customBlock !== null) {
-                    // The custom blocks can't be named in the list, so they are left alone when there is one
-                    if (allowed.isNotEmpty()) return@fastFor
-                    val preHarvestEvent = PreFarmerMinionHarvestEvent(minion, block)
-                    Bukkit.getPluginManager().callEvent(preHarvestEvent)
-                    if (preHarvestEvent.isCancelled) return@fastFor
-                    val blockDrops = customBlock.getLoot(minion.getTool(), false)
-                    size += blockDrops.size
-                    drops.addAll(blockDrops)
-                    customBlock.remove()
-                    return@fastFor
-                }
+            val customBlock = CustomBlocks.get(block)
+            if (customBlock !== null) {
+                // The custom blocks can't be named in the list, so they are left alone when there is one
+                if (allowed.isNotEmpty()) return@fastFor
+                val preHarvestEvent = PreFarmerMinionHarvestEvent(minion, block)
+                Bukkit.getPluginManager().callEvent(preHarvestEvent)
+                if (preHarvestEvent.isCancelled) return@fastFor
+                val blockDrops = customBlock.getLoot(minion.getTool())
+                size += blockDrops.size
+                drops.addAll(blockDrops)
+                customBlock.remove()
+                return@fastFor
             }
 
             if (allowed.isNotEmpty() && block.type !in allowed) return@fastFor
@@ -156,6 +154,8 @@ class FarmerMinionType : MinionType("farmer", AxMinionsPlugin.INSTANCE.getResour
                 else -> return@fastFor
             }
         }
+
+        if (size > 0) minion.playWorkAnimation()
 
         minion.addToContainerOrDrop(drops)
         minion.damageTool(size)

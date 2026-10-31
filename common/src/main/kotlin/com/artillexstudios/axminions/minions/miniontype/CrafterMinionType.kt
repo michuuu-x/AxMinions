@@ -94,6 +94,7 @@ class CrafterMinionType : MinionType("crafter", AxMinionsPlugin.INSTANCE.getReso
             }
 
             doCraftShapeless(inv, recipe, contents)
+            minion.playWorkAnimation()
             minion.setActions(minion.getActionAmount() + 1)
 
             recipeIterator = shapeless.iterator()
@@ -111,6 +112,7 @@ class CrafterMinionType : MinionType("crafter", AxMinionsPlugin.INSTANCE.getReso
             }
 
             doCraftShaped(inv, recipe, contents)
+            minion.playWorkAnimation()
             minion.setActions(minion.getActionAmount() + 1)
 
             shapedIterator = shaped.iterator()
