@@ -99,6 +99,8 @@ class Config(file: File, stream: InputStream) {
         @JvmStatic
         fun ALERTS_MIN_GAP() = AxMinionsAPI.INSTANCE.getConfig().get("alerts.min-gap", 3)
         @JvmStatic
+        fun ALERTS_LOW_CHARGE() = AxMinionsAPI.INSTANCE.getConfig().get("alerts.low-charge", 300)
+        @JvmStatic
         fun ALERTS_WARNINGS(): List<String> = AxMinionsAPI.INSTANCE.getConfig().getConfig().getStringList("alerts.warnings", listOf("no-tool", "container-full", "no-charge"))
         @JvmStatic
         fun DISABLED_WORLDS(): List<String> = AxMinionsAPI.INSTANCE.getConfig().getConfig().getStringList("disabled-worlds", emptyList())

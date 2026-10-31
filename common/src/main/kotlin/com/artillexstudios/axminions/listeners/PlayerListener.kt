@@ -2,6 +2,7 @@ package com.artillexstudios.axminions.listeners
 
 import com.artillexstudios.axminions.api.warnings.OwnerAlerts
 import com.artillexstudios.axminions.minions.Minions
+import com.artillexstudios.axminions.utils.MinionActivity
 import com.artillexstudios.axminions.utils.PlayerStats
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -26,6 +27,7 @@ class PlayerListener : Listener {
     @EventHandler
     fun onPlayerJoinEvent(event: PlayerQuitEvent) {
         PlayerStats.forget(event.player.uniqueId)
+        MinionActivity.forget(event.player.uniqueId)
         OwnerAlerts.unload(event.player.uniqueId)
 
         Minions.getMinions().forEach {

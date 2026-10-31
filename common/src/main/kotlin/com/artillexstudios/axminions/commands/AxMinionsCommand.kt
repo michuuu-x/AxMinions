@@ -13,6 +13,7 @@ import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.fastFor
 import com.artillexstudios.axminions.converter.LitMinionsConverter
 import com.artillexstudios.axminions.integrations.island.SuperiorSkyBlock2Integration
+import com.artillexstudios.axminions.minions.Minion
 import com.artillexstudios.axminions.minions.Minions
 import com.artillexstudios.axminions.utils.PlayerStats
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI
@@ -100,6 +101,17 @@ class AxMinionsCommand {
         }
 
         AxMinionsPlugin.integrations.reload()
+
+        // The model of a type, or of one of its levels, may have changed, and so may its size and its idle animation,
+        // which only count when the model is made, so every minion gets a new one
+        AxMinionsAPI.INSTANCE.getMinions().fastFor { minion ->
+            if (minion is Minion) {
+                Scheduler.get().executeAt(minion.getLocation()) {
+                    minion.updateModel(true)
+                }
+            }
+        }
+
         AxMinionsPlugin.shop.reload()
         AxMinionsPlugin.minionList.reload()
         AxMinionsPlugin.users.reload()

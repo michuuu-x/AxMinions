@@ -132,6 +132,36 @@ abstract class MinionType(private val name: String, private val defaults: InputS
         return get(key, level, null, Section::class.java)
     }
 
+    /**
+     * The id of the ModelEngine model the minions have at the level, empty if they have none.
+     * 'model' in the upgrades is the model from that level on, 'model' on top is the one of the levels that have none set.
+     */
+    fun getModelId(level: Int): String {
+        return get("model", level, null, String::class.java) ?: config.getString("model", "")
+    }
+
+    /**
+     * How big the model is compared to how it is made, 'model-scale' in the config.
+     */
+    fun getModelScale(): Double {
+        return config.getDouble("model-scale", 1.0)
+    }
+
+    /**
+     * The animation of the model that plays while the minion has nothing to do, 'model-idle-animation' in the config.
+     */
+    fun getModelIdleAnimation(): String {
+        return config.getString("model-idle-animation", "idle")
+    }
+
+    /**
+     * The animation of the model for the movement of the arm, which is played every time the minion does its job,
+     * 'model-animation' in the config.
+     */
+    fun getModelAnimation(): String {
+        return config.getString("model-animation", "work")
+    }
+
     private fun <T> get(key: String, level: Int, defaultValue: T?, clazz: Class<T>): T? {
         var n = defaultValue
 

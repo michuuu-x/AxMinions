@@ -198,6 +198,9 @@ class AxMinionsPlugin : AxPlugin() {
                             player.closeInventory()
                         }
                     }
+
+                    // The models would stay in the world if only this plugin is reloaded
+                    minionImp.hideModel()
                 }
             }
         }

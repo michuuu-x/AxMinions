@@ -36,6 +36,7 @@ alerts:
   no-tool: "<red>Your <white><type></white> minion at <white><location></white> needs a tool!"
   container-full: "<red>The container of your <white><type></white> minion at <white><location></white> is full!"
   no-charge: "<red>Your <white><type></white> minion at <white><location></white> ran out of charge!"
+  low-charge: "<red>Your <white><type></white> minion at <white><location></white> will run out of charge in <white><time></white>!" # There also is <time>, how long the charge lasts
   no-container: "<red>Your <white><type></white> minion at <white><location></white> is not linked to a container!"
   no-water-nearby: "<red>Your <white><type></white> minion at <white><location></white> needs water nearby!"
   on: "<green>You will get a message when one of your minions stops working."
@@ -143,4 +144,4 @@ users:
   no-access: "<red>You can't open the menu of this minion, because you are not its owner or one of the trusted players!"
 
 # Do not change!
-config-version: 24
+config-version: 25

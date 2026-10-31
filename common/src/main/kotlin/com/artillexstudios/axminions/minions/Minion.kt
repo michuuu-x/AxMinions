@@ -1,6 +1,5 @@
 package com.artillexstudios.axminions.minions
 
-import com.artillexstudios.axapi.events.PacketEntityInteractEvent
 import com.artillexstudios.axapi.hologram.Hologram
 import com.artillexstudios.axapi.hologram.HologramType
 import com.artillexstudios.axapi.hologram.HologramTypes
@@ -24,6 +23,7 @@ import com.artillexstudios.axminions.api.config.Messages
 import com.artillexstudios.axminions.api.events.PreMinionPickupEvent
 import com.artillexstudios.axminions.api.minions.Direction
 import com.artillexstudios.axminions.api.minions.Minion
+import com.artillexstudios.axminions.api.minions.MinionModel
 import com.artillexstudios.axminions.api.minions.miniontype.MinionType
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
 import com.artillexstudios.axminions.api.utils.Keys
@@ -58,6 +58,7 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.EulerAngle
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
@@ -79,7 +80,9 @@ class Minion(
     // A stopped minion does nothing, the owner can start it again in the menu
     @Volatile private var working: Boolean = true,
     // The containers after the first one, which is filled when the ones before it are full
-    extraChests: List<Location> = emptyList()
+    extraChests: List<Location> = emptyList(),
+    // How much charge a stopped minion had left when it was saved, in milliseconds. -1 if it is not known (or the minion worked)
+    chargePaused: Long = -1
 ) : Minion {
     companion object {
         private val equipmentSlots: Array<EquipmentSlot> = arrayOf(
@@ -91,6 +94,9 @@ class Minion(
             EquipmentSlot.HELMET
         )
         private val notDurable = arrayListOf<Material>()
+
+        // The models that were told about being missing, so the console isn't filled with the same message for every minion
+        private val missingModels = ConcurrentHashMap.newKeySet<String>()
 
         init {
             for (value in Material.entries) {
@@ -118,10 +124,20 @@ class Minion(
     private var nameContent = ""
     private var chargeButtonTime = ""
 
+    // The model of the minion, if its type has one for its level. The armor stand stays there invisible then,
+    // as something to click on when the model has no hitbox of its own
+    private var model: MinionModel? = null
+
     // The charge of a stopped minion doesn't run out, so the time it stays stopped is added to it (getCharge and setCharge do that).
     // This is when it was stopped, 0 while it works
     private var stoppedAt = if (working) 0L else System.currentTimeMillis()
     private val chargeLock = Any()
+
+    init {
+        // A stopped minion has the charge it had when it was saved, the time the server was off doesn't use it up either
+        if (!working && chargePaused >= 0) charge = stoppedAt + chargePaused
+    }
+
     private val extraData = hashMapOf<String, String>()
     // A linked container with its inventory, which is only there while the chunk of the container is loaded
     private class LinkedContainer(val location: Location) {
@@ -163,75 +179,7 @@ class Minion(
         meta.showArms(true)
 
         entity.onInteract { event ->
-            if (broken.get()) {
-                return@onInteract
-            }
-
-            // Left-click no longer does anything; pickup is Shift + Right Click
-            if (event.isAttack) {
-                return@onInteract
-            }
-
-            val pickup = event.player.isSneaking
-
-            // We want to do this, so we don't accidentally cause dupes...
-            // Atomic variable; we don't want the scheduler to mess up the state
-            if (pickup) {
-                broken.set(true)
-            }
-
-            Scheduler.get().runAt(location) { task ->
-                val canBuildAt = AxMinionsPlugin.integrations.getProtectionIntegration().canBuildAt(
-                    event.player,
-                    event.packetEntity.location()
-                )
-
-                if (pickup) {
-                    if (!event.player.hasPermission("axminions.use.pickup")) {
-                        broken.set(false)
-                        event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_NO_PERMISSION()))
-                    } else if (event.player.inventory.firstEmpty() == -1) {
-                        broken.set(false)
-                    } else {
-                        if (ownerUUID == event.player.uniqueId) {
-                            breakMinion(event)
-                        } else if ((canBuildAt && !Config.ONLY_OWNER_BREAK()) || Bypass.owner(event.player)) {
-                            breakMinion(event)
-                        } else if (AxMinionsPlugin.users.hasPermission(ownerUUID, event.player.uniqueId, TrustPermission.PICKUP)) {
-                            breakMinion(event)
-                        } else {
-                            broken.set(false)
-
-                            // A trusted player is told why it didn't work, the others have no business with this minion
-                            if (AxMinionsPlugin.users.isTrusted(ownerUUID, event.player.uniqueId)) {
-                                event.player.sendMessage(
-                                    StringUtils.formatToString(
-                                        Messages.PREFIX() + Messages.USERS_NO_PERMISSION(),
-                                        Placeholder.unparsed("permission", AxMinionsPlugin.users.getLabel(TrustPermission.PICKUP))
-                                    )
-                                )
-                            }
-                        }
-                    }
-                } else if (!type.isEnabled()) {
-                    event.player.sendMessage(
-                        StringUtils.formatToString(
-                            Messages.PREFIX() + Messages.MINION_TYPE_DISABLED(),
-                            Placeholder.unparsed("type", type.getName())
-                        )
-                    )
-                } else {
-                    if (ownerUUID == event.player.uniqueId) {
-                        openInventory(event.player)
-                    } else if ((canBuildAt && !Config.ONLY_OWNER_GUI()) || Bypass.owner(event.player)) {
-                        openInventory(event.player)
-                    } else if (AxMinionsPlugin.users.isTrusted(ownerUUID, event.player.uniqueId)) {
-                        openInventory(event.player)
-                    } else {
-                        event.player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.USERS_NO_ACCESS()))
-                    }
-                }
-            }
+            interact(event.player, event.isAttack)
         }
 
         if (Config.DEBUG()) {
@@ -249,6 +197,7 @@ class Minion(
 
         meta.metadata().set(Accessors.POSE, Pose.STANDING)
         setDirection(direction, false)
+        updateModel()
         updateArmour()
         entity.spawn()
 
@@ -313,18 +262,131 @@ class Minion(
         return StringUtils.formatToString(if (working) Messages.STATUS_WORKING() else Messages.STATUS_STOPPED())
     }
 
-    private fun breakMinion(event: PacketEntityInteractEvent) {
-        val preBreakEvent = PreMinionPickupEvent(event.player, this)
+    /**
+     * Gives the minion the model its type sets for its level ('model' in the config of the type), or takes the model away
+     * if there is none, and shows the armor stand again. [force] makes a new model even if the minion has the right one,
+     * which is for when ModelEngine loaded the models again.
+     */
+    internal fun updateModel(force: Boolean = false) {
+        val integration = AxMinionsPlugin.integrations.getModelIntegration()
+        val wanted = if (integration == null) "" else type.getModelId(level).trim()
+
+        val current = model
+        if (current == null && wanted.isEmpty()) return
+        if (current != null && !force && current.getId() == wanted && current.isValid()) return
+
+        hideModel()
+        if (integration != null && wanted.isNotEmpty()) {
+            model = integration.create(this, wanted, type.getModelScale(), type.getModelIdleAnimation())
+
+            // The models are loaded some time after the server started, so one that is not there yet is not a mistake until then.
+            // It shows up when they are loaded (ModelEngine tells about that), the minion has its armor stand until then.
+            // A forced update is the one that comes with that message, so the models are loaded for sure
+            if (model == null && (force || integration.isReady()) && missingModels.add(wanted)) {
+                AxMinionsPlugin.INSTANCE.logger.warning("The ${type.getName()} minion is set to have the model '$wanted', but ModelEngine has no model with that id!")
+            }
+        }
+
+        val meta = entity.meta() as ArmorStandMeta
+        meta.invisible(model != null)
+        // The stand is only something to click on while there is a model, so it is as big as can be
+        meta.small(model == null)
+        updateArmour()
+    }
+
+    internal fun hideModel() {
+        model?.remove()
+        model = null
+    }
+
+    /**
+     * A click of the player on the minion, which is either on its armor stand or on its model.
+     * Left-click does nothing, right-click opens the menu and Shift + right-click picks the minion up.
+     */
+    internal fun interact(player: Player, attack: Boolean) {
+        if (broken.get()) {
+            return
+        }
+
+        // Left-click no longer does anything; pickup is Shift + Right Click
+        if (attack) {
+            return
+        }
+
+        val pickup = player.isSneaking
+
+        // We want to do this, so we don't accidentally cause dupes...
+        // Atomic variable; we don't want the scheduler to mess up the state
+        if (pickup) {
+            broken.set(true)
+        }
+
+        Scheduler.get().runAt(location) { task ->
+            val canBuildAt = AxMinionsPlugin.integrations.getProtectionIntegration().canBuildAt(
+                player,
+                entity.location()
+            )
+
+            if (pickup) {
+                if (!player.hasPermission("axminions.use.pickup")) {
+                    broken.set(false)
+                    player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.ERROR_NO_PERMISSION()))
+                } else if (player.inventory.firstEmpty() == -1) {
+                    broken.set(false)
+                } else {
+                    if (ownerUUID == player.uniqueId) {
+                        breakMinion(player)
+                    } else if ((canBuildAt && !Config.ONLY_OWNER_BREAK()) || Bypass.owner(player)) {
+                        breakMinion(player)
+                    } else if (AxMinionsPlugin.users.hasPermission(ownerUUID, player.uniqueId, TrustPermission.PICKUP)) {
+                        breakMinion(player)
+                    } else {
+                        broken.set(false)
+
+                        // A trusted player is told why it didn't work, the others have no business with this minion
+                        if (AxMinionsPlugin.users.isTrusted(ownerUUID, player.uniqueId)) {
+                            player.sendMessage(
+                                StringUtils.formatToString(
+                                    Messages.PREFIX() + Messages.USERS_NO_PERMISSION(),
+                                    Placeholder.unparsed("permission", AxMinionsPlugin.users.getLabel(TrustPermission.PICKUP))
+                                )
+                            )
+                        }
+                    }
+                }
+            } else if (!type.isEnabled()) {
+                player.sendMessage(
+                    StringUtils.formatToString(
+                        Messages.PREFIX() + Messages.MINION_TYPE_DISABLED(),
+                        Placeholder.unparsed("type", type.getName())
+                    )
+                )
+            } else {
+                if (ownerUUID == player.uniqueId) {
+                    openInventory(player)
+                } else if ((canBuildAt && !Config.ONLY_OWNER_GUI()) || Bypass.owner(player)) {
+                    openInventory(player)
+                } else if (AxMinionsPlugin.users.isTrusted(ownerUUID, player.uniqueId)) {
+                    openInventory(player)
+                } else {
+                    player.sendMessage(StringUtils.formatToString(Messages.PREFIX() + Messages.USERS_NO_ACCESS()))
+                }
+            }
+        }
+    }
+
+    private fun breakMinion(breaker: Player) {
+        val preBreakEvent = PreMinionPickupEvent(breaker, this)
         Bukkit.getPluginManager().callEvent(preBreakEvent)
         if (preBreakEvent.isCancelled) return
 
-        LinkingListener.linking.remove(event.player)
+        LinkingListener.linking.remove(breaker)
         remove()
         setTicking(false)
         openInventories.fastFor { it.viewers.fastFor { viewer -> viewer.closeInventory() } }
         val tool = getTool()
         val asItem = getAsItem()
-        val remaining = event.player.inventory.addItem(tool, asItem)
+        val remaining = breaker.inventory.addItem(tool, asItem)
 
         if (getType() == MinionTypes.getMinionTypes()["seller"]) {
             AxMinionsPlugin.integrations.getEconomyIntegration()?.let {
@@ -359,6 +421,7 @@ class Minion(
             updateHologramVisibility()
             updateChargeTime()
             updateChargeButton()
+            alertLowCharge()
         }
 
         // Disabled types don't work, their minions can only be picked up
@@ -386,6 +449,18 @@ class Minion(
             type.tick(this)
         }
         animate()
+    }
+
+    // Tells the owner a little before the charge runs out ('low-charge' in the alerts of the config.yml, 0 turns it off).
+    // Only a minion that works uses its charge up, and the one that ran out of it has its own warning
+    private fun alertLowCharge() {
+        val before = Config.ALERTS_LOW_CHARGE()
+        if (before <= 0 || !Config.CHARGE_ENABLED() || !working || !type.isEnabled()) return
+
+        val left = getChargeLeft()
+        if (left > 0 && left <= before * 1000L) {
+            OwnerAlerts.alertLowCharge(this, left)
+        }
     }
 
     private fun updateHologramVisibility() {
@@ -702,7 +777,10 @@ class Minion(
             entity.setItem(EquipmentSlot.MAIN_HAND, null)
             unbreakable = false
         } else {
-            entity.setItem(EquipmentSlot.MAIN_HAND, WrappedItemStack.wrap(tool.clone()))
+            // The armor stand of a model is invisible, but it would still show what it holds
+            if (model == null) {
+                entity.setItem(EquipmentSlot.MAIN_HAND, WrappedItemStack.wrap(tool.clone()))
+            }
             unbreakable = notDurable.contains(tool.type)
         }
 
@@ -723,6 +801,7 @@ class Minion(
 
     override fun setLevel(level: Int) {
         this.level = level
+        updateModel()
         updateArmour()
         updateInventories()
 
@@ -759,10 +838,12 @@ class Minion(
 
     override fun resetAnimation() {
         armTick = 0.0
+        model?.playAnimation(type.getModelAnimation())
     }
 
     override fun animate() {
-        if (armTick >= 2) return
+        // The armor stand of a model is invisible, so there is no arm to swing
+        if (model != null || armTick >= 2) return
 
         val meta = entity.meta() as ArmorStandMeta
         meta.metadata().set(Accessors.RIGHT_ARM_ROTATION, EulerAngle(-2 + armTick, 0.0, 0.0))
@@ -910,6 +991,7 @@ class Minion(
         this.direction = direction
         location.yaw = direction.yaw
         entity.teleport(location)
+        model?.teleport(location)
 
         if (save) {
             AxMinionsPlugin.dataQueue.submit {
@@ -927,6 +1009,7 @@ class Minion(
         OwnerAlerts.forget(this)
         nameHologram?.remove()
         statusHologram?.remove()
+        hideModel()
         Minions.remove(this)
         entity.remove()
 
@@ -986,6 +1069,9 @@ class Minion(
         }
 
         setTool(this.tool ?: ItemStack(Material.AIR), false)
+
+        // A model has a look of its own, and the invisible armor stand would still show what it wears
+        if (model != null) return
 
         type.getSection("items.helmet", level)?.let {
             entity.setItem(EquipmentSlot.HELMET, WrappedItemStack.wrap(ItemBuilder.create(it).get()))
@@ -1235,6 +1321,13 @@ class Minion(
     override fun getCharge(): Long {
         return synchronized(chargeLock) {
             if (stoppedAt == 0L) charge else charge + (System.currentTimeMillis() - stoppedAt)
+        }
+    }
+
+    override fun getChargeLeft(): Long {
+        return synchronized(chargeLock) {
+            // A stopped minion keeps what it had left when it was stopped
+            if (stoppedAt == 0L) charge - System.currentTimeMillis() else charge - stoppedAt
         }
     }
 

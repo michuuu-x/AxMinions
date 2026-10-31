@@ -18,9 +18,8 @@ softdepend:
   - Lands
   - SuperiorSkyBlock2
   - WorldGuard
-  - PlotSquared
-  - Towny
   - ItemsAdder
+  - ModelEngine
   - PlaceholderAPI
   - ExcellentEconomy
   - PlayerPoints

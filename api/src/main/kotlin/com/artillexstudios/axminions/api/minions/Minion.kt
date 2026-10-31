@@ -195,5 +195,11 @@ interface Minion : InventoryHolder {
 
     fun getCharge(): Long
 
+    /**
+     * How much charge the minion has left, in milliseconds, negative if it ran out already.
+     * A stopped minion doesn't use its charge up, so it keeps what it had left when it was stopped.
+     */
+    fun getChargeLeft(): Long
+
     fun setCharge(charge: Long)
 }

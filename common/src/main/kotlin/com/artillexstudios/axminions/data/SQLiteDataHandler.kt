@@ -43,7 +43,7 @@ class SQLiteDataHandler : DataHandler {
                 statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_users`(`uuid` VARCHAR(36) PRIMARY KEY, `name` VARCHAR(16), `island_slots` INT DEFAULT 0);")
                 statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_worlds`(`id` INTEGER PRIMARY KEY, `name` VARCHAR(64) UNIQUE);")
                 statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_locations`(`id` INTEGER PRIMARY KEY AUTOINCREMENT, `x` INT, `y` INT, `z` INT, `world_id` INT, UNIQUE(`x`, `y`, `z`, `world_id`), FOREIGN KEY(`world_id`) REFERENCES `axminions_worlds`(`id`));")
-                statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_minions`(`id` INTEGER PRIMARY KEY, `location_id` INT UNIQUE, `chest_location_id` INT, `owner_id` VARCHAR(36), `type_id` INT, `direction` TINYINT, `level` SMALLINT, `storage` DOUBLE, `actions` BIGINT, `tool` TEXT, `charge` BIGINT DEFAULT 0, `working` TINYINT DEFAULT 1, `extra_chests` TEXT, FOREIGN KEY(`location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`chest_location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`owner_id`) REFERENCES `axminions_users`(`uuid`), FOREIGN KEY(`type_id`) REFERENCES `axminions_types`(`id`));")
+                statement.executeUpdate("CREATE TABLE IF NOT EXISTS `axminions_minions`(`id` INTEGER PRIMARY KEY, `location_id` INT UNIQUE, `chest_location_id` INT, `owner_id` VARCHAR(36), `type_id` INT, `direction` TINYINT, `level` SMALLINT, `storage` DOUBLE, `actions` BIGINT, `tool` TEXT, `charge` BIGINT DEFAULT 0, `working` TINYINT DEFAULT 1, `extra_chests` TEXT, `charge_paused` BIGINT DEFAULT -1, FOREIGN KEY(`location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`chest_location_id`) REFERENCES `axminions_locations`(`id`), FOREIGN KEY(`owner_id`) REFERENCES `axminions_users`(`uuid`), FOREIGN KEY(`type_id`) REFERENCES `axminions_types`(`id`));")
                 // SQLite can't add a column conditionally, so check what the table already has
                 val columns = HashSet<String>()
                 statement.executeQuery("PRAGMA table_info(`axminions_minions`);").use { resultSet ->
@@ -56,6 +56,9 @@ class SQLiteDataHandler : DataHandler {
                 }
                 if ("extra_chests" !in columns) {
                     statement.executeUpdate("ALTER TABLE `axminions_minions` ADD COLUMN `extra_chests` TEXT;")
+                }
+                if ("charge_paused" !in columns) {
+                    statement.executeUpdate("ALTER TABLE `axminions_minions` ADD COLUMN `charge_paused` BIGINT DEFAULT -1;")
                 }
                 statement.executeUpdate("CREATE INDEX IF NOT EXISTS `axminions_minions_owner` ON `axminions_minions`(`owner_id`);")
                 statement.executeUpdate("CREATE INDEX IF NOT EXISTS `axminions_minions_chest` ON `axminions_minions`(`chest_location_id`);")
@@ -106,6 +109,9 @@ class SQLiteDataHandler : DataHandler {
                         val workingValue = resultSet.getInt("working")
                         // Minions saved before the Start/Stop button existed have no value, they work
                         val working = resultSet.wasNull() || workingValue != 0
+                        // What a stopped minion had left of its charge, minions saved before it was kept have none
+                        val chargePausedValue = resultSet.getLong("charge_paused")
+                        val chargePaused = if (resultSet.wasNull()) -1L else chargePausedValue
 
                         val location = Location(
                             world,
@@ -147,7 +153,8 @@ class SQLiteDataHandler : DataHandler {
                                 chestLocationId,
                                 charge,
                                 working,
-                                extraChests
+                                extraChests,
+                                chargePaused
                             )
                         }
                     }
@@ -245,7 +252,7 @@ class SQLiteDataHandler : DataHandler {
                 statement.executeUpdate()
             }
 
-            connection.prepareStatement("INSERT INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`, `extra_chests`) VALUES(?, ?, ?, (SELECT `id` FROM `axminions_types` WHERE `name` = ?), ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(`location_id`) DO UPDATE SET `chest_location_id` = excluded.`chest_location_id`, `owner_id` = excluded.`owner_id`, `type_id` = excluded.`type_id`, `direction` = excluded.`direction`, `level` = excluded.`level`, `storage` = excluded.`storage`, `actions` = excluded.`actions`, `tool` = excluded.`tool`, `charge` = excluded.`charge`, `working` = excluded.`working`, `extra_chests` = excluded.`extra_chests`;")
+            connection.prepareStatement("INSERT INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`, `extra_chests`, `charge_paused`) VALUES(?, ?, ?, (SELECT `id` FROM `axminions_types` WHERE `name` = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(`location_id`) DO UPDATE SET `chest_location_id` = excluded.`chest_location_id`, `owner_id` = excluded.`owner_id`, `type_id` = excluded.`type_id`, `direction` = excluded.`direction`, `level` = excluded.`level`, `storage` = excluded.`storage`, `actions` = excluded.`actions`, `tool` = excluded.`tool`, `charge` = excluded.`charge`, `working` = excluded.`working`, `extra_chests` = excluded.`extra_chests`, `charge_paused` = excluded.`charge_paused`;")
                 .use { statement ->
                     statement.setInt(1, locationId)
                     if (linkedChestId == null) {
@@ -264,10 +271,13 @@ class SQLiteDataHandler : DataHandler {
                     } else {
                         statement.setString(9, Serializers.ITEM_STACK.serialize(minion.getTool()))
                     }
+                    val working = minion.isWorking()
                     statement.setLong(10, minion.getCharge())
-                    statement.setInt(11, if (minion.isWorking()) 1 else 0)
+                    statement.setInt(11, if (working) 1 else 0)
                     // The first container has its own column
                     statement.setString(12, ChestLocations.serialize(minion.getLinkedChests().drop(1)))
+                    // The time the server is off doesn't use up the charge of a stopped minion, so what it has left is saved too
+                    statement.setLong(13, if (working) -1L else minion.getChargeLeft().coerceAtLeast(0L))
                     statement.executeUpdate()
                 }
         }

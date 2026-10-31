@@ -8,6 +8,20 @@ tool:
   material:
     - "FISHING_ROD"
 
+# The ModelEngine model of this minion (the ModelEngine plugin has to be installed), leave it empty to keep the armor stand.
+# It is the id of the model, which is the name of its .bbmodel file. The model replaces the armor stand with its armor and tool,
+# and the minion is clicked as always. A level can have a model of its own with 'model' in its upgrades, and keeps the model
+# of the level before it otherwise. /axminions reload gives the minions the models that are set now.
+model: ""
+# How big the model is compared to how it was made
+model-scale: 1.0
+# The animations are the ones of the model in Blockbench (Animate tab), the name has to be the same, upper and lower case letters count.
+# The animation that plays while the minion has nothing to do, it should loop (Loop Mode: Loop in Blockbench)
+model-idle-animation: "idle"
+# The animation for the movement of the arm, which plays every time the minion does its job, on top of the idle one.
+# It should not loop (Loop Mode: Once). If both move the same bone, the Override setting of the animation decides which one is seen
+model-animation: "work"
+
 # The worlds where this minion can't be placed (not case-sensitive), on top of 'disabled-worlds' in the config.yml.
 # Minions that are already in these worlds keep working.
 disabled-worlds: []

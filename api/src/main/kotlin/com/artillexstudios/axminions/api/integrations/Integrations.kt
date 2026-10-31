@@ -12,6 +12,8 @@ interface Integrations {
 
     fun getIslandIntegration(): IslandIntegration?
 
+    fun getModelIntegration(): ModelIntegration?
+
     fun getProtectionIntegration(): ProtectionIntegrations
 
     fun reload()

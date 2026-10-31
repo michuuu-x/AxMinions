@@ -10,6 +10,7 @@ import com.artillexstudios.axminions.api.integrations.types.*
 import com.artillexstudios.axminions.integrations.economy.ExcellentEconomyIntegration
 import com.artillexstudios.axminions.integrations.economy.PlayerPointsIntegration
 import com.artillexstudios.axminions.integrations.economy.VaultIntegration
+import com.artillexstudios.axminions.integrations.model.ModelEngineIntegration
 import com.artillexstudios.axminions.integrations.placeholder.PlaceholderAPIIntegration
 import com.artillexstudios.axminions.integrations.prices.BuiltinPricesIntegration
 import com.artillexstudios.axminions.integrations.prices.CMIIntegration
@@ -22,11 +23,11 @@ import com.artillexstudios.axminions.integrations.protection.IridiumSkyBlockInte
 import com.artillexstudios.axminions.integrations.protection.KingdomsXIntegration
 import com.artillexstudios.axminions.integrations.protection.LandsIntegration
 import com.artillexstudios.axminions.integrations.protection.SuperiorSkyBlock2Integration
-//import com.artillexstudios.axminions.integrations.protection.TownyIntegration
 import com.artillexstudios.axminions.integrations.protection.WorldGuardIntegration
 import com.artillexstudios.axminions.integrations.stacker.DefaultStackerIntegration
 import com.artillexstudios.axminions.integrations.stacker.RoseStackerIntegration
 import com.artillexstudios.axminions.integrations.stacker.WildStackerIntegration
+import com.artillexstudios.axminions.listeners.ModelEngineListener
 import com.artillexstudios.axminions.listeners.SuperiorSkyBlock2Listener
 import java.util.Locale
 import org.bukkit.Bukkit
@@ -36,6 +37,10 @@ class Integrations : Integrations {
     private var pricesIntegration: PricesIntegration? = null
     private var economyIntegration: EconomyIntegration? = null
     private var islandIntegration: IslandIntegration? = null
+    private var modelIntegration: ModelIntegration? = null
+
+    // reload() runs again with /axminions reload, and the listener of ModelEngine must not be registered twice
+    private var modelEngineListenerRegistered = false
     private val protectionIntegrations = com.artillexstudios.axminions.integrations.protection.ProtectionIntegrations()
     internal var itemsAdderIntegration = false
 
@@ -53,6 +58,10 @@ class Integrations : Integrations {
 
     override fun getIslandIntegration(): IslandIntegration? {
         return islandIntegration
+    }
+
+    override fun getModelIntegration(): ModelIntegration? {
+        return modelIntegration
     }
 
     override fun getProtectionIntegration(): ProtectionIntegrations {
@@ -205,17 +214,15 @@ class Integrations : Integrations {
                 .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ItemsAdder!"))
         }
 
-        if (Bukkit.getPluginManager().getPlugin("ItemsAdder") != null) {
-            itemsAdderIntegration = true
+        if (Bukkit.getPluginManager().getPlugin("ModelEngine") != null) {
+            register(ModelEngineIntegration())
+            if (!modelEngineListenerRegistered) {
+                modelEngineListenerRegistered = true
+                Bukkit.getPluginManager().registerEvents(ModelEngineListener(), AxMinionsPlugin.INSTANCE)
+            }
             Bukkit.getConsoleSender()
-                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ItemsAdder!"))
+                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into ModelEngine!"))
         }
-
-//        if (Bukkit.getPluginManager().getPlugin("Towny") != null) {
-//            register(TownyIntegration())
-//            Bukkit.getConsoleSender()
-//                .sendMessage(StringUtils.formatToString("<#33FF33>[AxMinions] Hooked into Towny!"))
-//        }
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             PlaceholderAPIIntegration().register()
@@ -244,6 +251,10 @@ class Integrations : Integrations {
 
             is IslandIntegration -> {
                 islandIntegration = integration
+            }
+
+            is ModelIntegration -> {
+                modelIntegration = integration
             }
 
             else -> {

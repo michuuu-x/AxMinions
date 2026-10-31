@@ -87,6 +87,13 @@ class H2DataHandler : DataHandler {
             }
         }
 
+        // How much charge a stopped minion has left, -1 for the ones that work (and the ones saved before it was kept)
+        dataSource.connection.use { connection ->
+            connection.prepareStatement("ALTER TABLE `axminions_minions` ADD COLUMN IF NOT EXISTS `charge_paused` BIGINT DEFAULT(-1);").use {
+                it.executeUpdate()
+            }
+        }
+
         dataSource.connection.use { connection ->
             connection.prepareStatement("ALTER TABLE `axminions_users` ADD COLUMN IF NOT EXISTS `island_slots` INT DEFAULT(0);").use {
                 it.executeUpdate()
@@ -157,6 +164,9 @@ class H2DataHandler : DataHandler {
                         val workingValue = resultSet.getBoolean("working")
                         // Minions saved before the Start/Stop button existed have no value, they work
                         val working = resultSet.wasNull() || workingValue
+                        // What a stopped minion had left of its charge, minions saved before it was kept have none
+                        val chargePausedValue = resultSet.getLong("charge_paused")
+                        val chargePaused = if (resultSet.wasNull()) -1L else chargePausedValue
 
                         val location = getLocation(locationId)
                         var chestLocation: Location? = null
@@ -185,7 +195,8 @@ class H2DataHandler : DataHandler {
                             chestLocationId,
                             charge,
                             working,
-                            extraChests
+                            extraChests,
+                            chargePaused
                         )
                     }
                 }
@@ -314,7 +325,7 @@ class H2DataHandler : DataHandler {
         }
 
         dataSource.connection.use { connection ->
-            connection.prepareStatement("MERGE INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`, `extra_chests`) KEY(`location_id`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
+            connection.prepareStatement("MERGE INTO `axminions_minions`(`location_id`, `chest_location_id`, `owner_id`, `type_id`, `direction`, `level`, `storage`, `actions`, `tool`, `charge`, `working`, `extra_chests`, `charge_paused`) KEY(`location_id`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
                 .use { statement ->
                     statement.setInt(1, locationId)
                     if (linkedChestId == null) {
@@ -333,8 +344,9 @@ class H2DataHandler : DataHandler {
                     } else {
                         statement.setString(9, Serializers.ITEM_STACK.serialize(minion.getTool()))
                     }
+                    val working = minion.isWorking()
                     statement.setLong(10, minion.getCharge())
-                    statement.setBoolean(11, minion.isWorking())
+                    statement.setBoolean(11, working)
                     // The first container has its own column
                     val extraChests = ChestLocations.serialize(minion.getLinkedChests().drop(1))
                     if (extraChests == null) {
@@ -342,6 +354,8 @@ class H2DataHandler : DataHandler {
                     } else {
                         statement.setString(12, extraChests)
                     }
+                    // The time the server is off doesn't use up the charge of a stopped minion, so what it has left is saved too
+                    statement.setLong(13, if (working) -1L else minion.getChargeLeft().coerceAtLeast(0L))
                     statement.executeUpdate()
                 }
         }

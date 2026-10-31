@@ -4,6 +4,8 @@ import com.artillexstudios.axminions.AxMinionsPlugin
 import com.artillexstudios.axminions.api.AxMinionsAPIImpl
 import com.artillexstudios.axminions.api.config.Config
 import com.artillexstudios.axminions.api.minions.miniontype.MinionTypes
+import com.artillexstudios.axminions.api.utils.TimeUtils
+import com.artillexstudios.axminions.utils.MinionActivity
 import com.artillexstudios.axminions.utils.PlayerStats
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
 import org.bukkit.entity.Player
@@ -49,6 +51,10 @@ class PlaceholderAPIIntegration : PlaceholderExpansion() {
             }
 
             "trusted_count" -> AxMinionsPlugin.users.getTrustedCount(player.uniqueId).toString()
+            // How many minions of the player work right now, the ones /minions list shows as Active
+            "active" -> MinionActivity.get(player.uniqueId).active.toString()
+            // The least charge the minions of the player that work have left, --- if there is none (or the minions don't need charge)
+            "lowest_charge" -> MinionActivity.get(player.uniqueId).lowestCharge?.let { TimeUtils.format(it) } ?: "---"
             else -> {
                 if (params.startsWith("placed_")) placedOfType(player, params.substring("placed_".length)) else ""
             }

@@ -67,6 +67,10 @@ alerts:
   # If several minions stop at once, they are told one after the other, so the action bar shows each of them
   # (a minion that has to wait is told as soon as the time is over). Set to 0 to tell them all at once.
   min-gap: 3
+  # How many seconds before the charge of a minion runs out the owner is told about it (the low-charge message in the messages.yml).
+  # Only minions that work are told, as a stopped one doesn't use its charge. It isn't one of the problems below, set it to 0 to turn it off.
+  # Needs charge to be enabled, and the cooldown above applies to it as well.
+  low-charge: 300
   # The problems the owner is told about. Can be: no-tool, container-full, no-charge, no-container, no-water-nearby
   warnings:
     - "no-tool"
@@ -289,4 +293,4 @@ holograms:
 debug: false
 
 # Do not change!
-config-version: 16
+config-version: 17
