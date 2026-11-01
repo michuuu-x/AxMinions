@@ -32,7 +32,7 @@ model-scale: 1.0
 # The animation that plays while the minion has nothing to do, it should loop (Loop Mode: Loop in Blockbench)
 model-idle-animation: "idle"
 # The animation for the movement of the arm, which plays only when the minion really does its job (a block is broken, a mob is hit, an item is picked up, crafted or sold), on top of the idle one.
-# It should not loop (Loop Mode: Once). If both move the same bone, the Override setting of the animation decides which one is seen
+# It is played once for each job, whatever its Loop Mode is in Blockbench. If both move the same bone, the Override setting of the animation decides which one is seen
 model-animation: "work"
 
 # The worlds where this minion can't be placed (not case-sensitive), on top of 'disabled-worlds' in the config.yml.

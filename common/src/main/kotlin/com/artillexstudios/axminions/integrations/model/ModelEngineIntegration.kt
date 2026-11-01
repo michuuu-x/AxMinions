@@ -5,6 +5,7 @@ import com.artillexstudios.axminions.api.integrations.types.ModelIntegration
 import com.artillexstudios.axminions.api.minions.Minion
 import com.artillexstudios.axminions.api.minions.MinionModel
 import com.ticxo.modelengine.api.ModelEngineAPI
+import com.ticxo.modelengine.api.animation.BlueprintAnimation
 import com.ticxo.modelengine.api.animation.ModelState
 import com.ticxo.modelengine.api.animation.handler.AnimationHandler
 import com.ticxo.modelengine.api.entity.Dummy
@@ -82,8 +83,9 @@ class ModelEngineIntegration : ModelIntegration {
         override fun playAnimation(animation: String) {
             if (animation.isBlank() || !isValid()) return
 
-            // The animation is restarted each time, as the minion does its job again
-            model.animationHandler.playAnimation(animation, 0.1, 0.1, 1.0, true)
+            // The animation is restarted each time, as the minion does its job again. It is played once whatever its Loop Mode
+            // is in Blockbench, as one that loops would never stop (not even when the minion is stopped), and one that holds would keep the arm where it ended
+            model.animationHandler.playAnimation(animation, 0.1, 0.1, 1.0, true)?.forceLoopMode = BlueprintAnimation.LoopMode.ONCE
         }
 
         override fun teleport(location: Location) {
